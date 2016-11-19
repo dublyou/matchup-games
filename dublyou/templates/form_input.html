@@ -1,0 +1,12 @@
+{% if args.options %}
+<select class="form-control {{ args.classes }}" id="{{ args.id }}" name="{{ args.id }}" {% for prop in args.props %} {{ prop.name }}="{{ prop.value }}"{% endfor %}>
+    <option value="">{{ args.placeholder }}</option>
+    {% for option in args.options}}
+    <option value="{{ option.value }}">{{ option.label }}</option>
+    {% endfor %}
+</select>
+{% elif args.type == "textarea" %}
+<textarea name="{{ args.id }}" class="form-control suttle-shadow {{ args.classes }}" placeholder="{{ args.placeholder }}" {% for prop in args.props %} {{ prop.name }}="{{ prop.value }}"{% endfor %}></textarea>
+{% else %}
+<input type="{{ args.type }}" class="form-control {{ args.classes }}" id="{{ args.id }}" name="{{ args.id }}" placeholder="{{ args.placeholder }}"{% for prop in args.props %} {{ prop.name }}="{{ prop.value }}"{% endfor %}>
+{% endif %}

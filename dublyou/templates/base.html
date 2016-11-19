@@ -1,0 +1,45 @@
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+
+    <title>{% block title %}Dublyou{% endblock %}</title>
+
+    <link rel='icon' href=''>
+
+    <link rel='stylesheet' href='css/bootstrap.min.css'>
+    <link rel='stylesheet' href='css/custom_styles.css'>
+
+    <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js'></script>
+    <script src='js/bootstrap.min.js'></script>
+    <script src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js'></script>
+    <script src='js/custom_functions.js'></script>
+    <script src='js/ready.js'></script>
+    <script src='js/global_variables.js'></script>
+
+</head>
+
+<body>
+    <div class="container">
+        <div id="navbar">
+            <ul>
+            {% for navbar_item in navbar}
+                <li><a href="{{ navbar_item.url }}">{{ navbar_item.label }}"</a>
+                {% if navbar_item.dropdown %}
+                    <ul>
+                    {% for dropdown_item in navbar_item.dropdown %}
+                        <li><a href="{{ dropdown_item.url }}">{{ dropdown_item.label }}"</a></li>
+                    {% endfor %}
+                    </ul>
+                </li>
+            {% endfor %}
+            </ul>
+            <div id="search_bar">
+                <input type="text" name="search_bar" placeholder="search...">
+            </div>
+        </div>
+    </div>
+    {% block body %}
+
+    {% endblock %}
+</body>

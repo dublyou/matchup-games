@@ -1,0 +1,8 @@
+<div class="star-rating">
+    <span class="glyphicon glyphicon-star {% if rating < .1 %}empty{% endif %}" aria-hidden="true"></span>
+    <span class="glyphicon glyphicon-star {% if rating < .3 %}empty{% endif %}" aria-hidden="true"></span>
+    <span class="glyphicon glyphicon-star {% if rating < .5 %}empty{% endif %}" aria-hidden="true"></span>
+    <span class="glyphicon glyphicon-star {% if rating < .7 %}empty{% endif %}" aria-hidden="true"></span>
+    <span class="glyphicon glyphicon-star {% if rating < .9 %}empty{% endif %}" aria-hidden="true"></span>
+    <span class="rating">{{ rating }}</span>
+</div>

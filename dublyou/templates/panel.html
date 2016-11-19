@@ -1,0 +1,26 @@
+<div id="{{ args.id }}" class="panel panel-default suttle-shadow {{ args.classes }}">
+{% if args.title %}
+    <div class="panel-heading low-padding-vert" role="tab">
+        <label for="{{ args.id }}_check" class="panel-title">{{ args.title }}
+            {% if args.collapsible %}
+            <input type="checkbox" name="{{ args.id }}_check" id="{{ args.id }}_check" class="hidden" onchange="$(this).triggerAction()">
+            {% endif %}
+        </label>
+    </div>
+{% endif %}
+    <div class="panel-body {% if args.collapsible %}d-action:{{ args.id }}_check:toggle:checked{% endif %}" data-transition="slideUp">
+    {% for content in args.contents %}
+        {{% if content.type == "template" %}
+            {% include content.value with args=content.args }}
+        {% else %}
+            {{ content.value }}
+        {% endif %}
+    {% empty %}
+        {% if args.content.type == "template" %}
+            {% include args.content.value with args=args.content.args }}
+        {% else %}
+            {{ args.content.value }}
+        {% endif %}
+    {% endfor %}
+    </div>
+</div>

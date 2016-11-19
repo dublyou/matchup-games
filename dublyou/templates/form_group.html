@@ -1,0 +1,35 @@
+<div class="form-group low-padding no-margin-horz {{ args.classes }}">
+    {% if args.inline %}
+    <label for="{{ args.id }}" class="control-label col-xs-4">{{ args.label }}</label>
+    <div class="col-xs-8">
+        {% for input in args.inputs %}
+            {% if input.items %}
+                {% include "input_group.html" with args=input only %}
+            {% else %}
+                {% include "form_input.html" with args=input only %}
+            {% endif %}
+        {% empty %}
+            {% if args.input.items %}
+                {% include "input_group.html" with args=args.input only %}
+            {% else %}
+                {% include "form_input.html" with args=args.input only %}
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% else % }
+    <label for="{{ args.id }}" class="control-label">{{ args.label }}</label>
+    {% for input in args.inputs %}
+        {% if input.items %}
+            {% include "input_group.html" with args=input only %}
+        {% else %}
+            {% include "form_input.html" with args=input only %}
+        {% endif %}
+    {% empty %}
+        {% if args.input.items %}
+            {% include "input_group.html" with args=args.input only %}
+        {% else %}
+            {% include "form_input.html" with args=args.input only %}
+        {% endif %}
+    {% endfor %}
+    {% endif %}
+</div>

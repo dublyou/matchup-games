@@ -1,0 +1,20 @@
+<div class="input-group">
+{% for item in args.items %}
+    {% if item.type == "button" or item.type == "submit" %}
+    <span class="input-group-btn">
+        <button class="btn btn-default" type="{{ item.type }}">{{ item.text }}</button>
+    </span>
+    {% elif item.type == "addon" %}
+    <span class="input-group-addon">{{ item.text }}</span>
+    {% elif item.options %}
+    <select class="form-control {{ item.classes }}" id="{{ item.id }}" name="{{ item.id }}" {% for prop in item.props %} {{ prop.name }}="{{ prop.value }}"{% endfor %}>
+        <option value="">{{ item.placeholder }}</option>
+        {% for option in item.options}}
+        <option value="{{ option.value }}">{{ option.label }}</option>
+        {% endfor %}
+    </select>
+    {% else %}
+    <input type="{{ item.type }}" class="form-control {{ item.classes }}" id="{{ item.id }}" name="{{ item.id }}" placeholder="{{ item.placeholder }}"{% for prop in item.props %} {{ prop.name }}="{{ prop.value }}"{% endfor %}>
+    {% endif %}
+{% endfor %}
+</div>

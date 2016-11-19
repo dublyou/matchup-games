@@ -1,0 +1,24 @@
+<ul class="nav nav-tabs nav-justified med-padding-horz">
+{% for tab in args.tabs %}
+    <li {% if forloop.first %}class="active"{% endif %}><a data-toggle="tab" href="#{{ tab.id }}">{{ tab.label }}</a></li>
+{% endfor %}
+</ul>
+<div class="tab-content bg-grey med-margin-horz med-padding">
+{% for tab in args.tabs %}
+    <div id="{{ tab.id }}" class="tab-pane fade">
+        {% for content in tab.contents %}
+            {% if content.type == "template" %}
+                {% include content.value with args=content.args }}
+            {% else %}
+                {{ content.value }}
+            {% endif %}
+        {% empty %}
+            {% if tab.content.type == "template" %}
+                {% include tab.content.value with args=tab.content.args }}
+            {% else %}
+                {{ tab.content.value }}
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endfor %}
+</div>
