@@ -8,18 +8,12 @@
         </label>
     </div>
 {% endif %}
-    <div class="panel-body {% if args.collapsible %}d-action:{{ args.id }}_check:toggle:checked{% endif %}" data-transition="slideUp">
-    {% for content in args.contents %}
-        {{% if content.type == "template" %}
-            {% include content.value with args=content.args }}
+    <div class="panel-body {{ args.body_classes }}{% if args.collapsible %}d-action:{{ args.id }}_check:toggle:checked{% endif %}" data-transition="slideUp">
+    {% for content in args.body_content %}
+        {% if content.type == "template" %}
+            {% include content.value with args=content.args %}
         {% else %}
             {{ content.value }}
-        {% endif %}
-    {% empty %}
-        {% if args.content.type == "template" %}
-            {% include args.content.value with args=args.content.args }}
-        {% else %}
-            {{ args.content.value }}
         {% endif %}
     {% endfor %}
     </div>

@@ -6,10 +6,10 @@
         <a href="{{ args.location.link }}" class="">{{ args.location.name }}</a>
       </div>
       <div class="party low-margin">
-        <a href="{{ user/party.id }}" class="img-link">
+        <a href="user/{{ party.id }}" class="img-link">
           <img class="" width="30px" height="30px" src="{{ party.image }}" alt="{{ party.name }}" />&nbsp;
         </a>
-        <a href="{{ user/party.id }}" class="inline-block">
+        <a href="user/{{ party.id }}" class="inline-block">
           <span class="party-name">{{ party.name }}</span>
           <span class="party-abbrev hidden">{{ party.abbrev }}</span>
         </a>

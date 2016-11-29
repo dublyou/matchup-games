@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block navbar %}
+{% include "navbar.html" with args=args.navbar only %}
+{% endblock %}
+
+{% block body %}
+
+<div class="container flex page-content">
+  {% include "panel.html" with args=args.panel only %}
+  {% include "form.html" with args=args.form only %}
+</div>
+
+{% endblock %}

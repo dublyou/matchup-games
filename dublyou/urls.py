@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """dublyou URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
@@ -13,11 +14,17 @@ Including another URLconf
     1. Import the include() function: from django.conf.urls import url, include
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
-from django.conf.urls import url
+from django.conf.urls import include, url
 from django.contrib import admin
-from .views import home
+from . import views
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^$', home, name='home'),
+    url(r'^$', views.home, name='home'),
+    url(r'^profile/$', views.profile_view, name='profile_view'),
+    url(r'^logout/$', views.logout_view, name='logout_view'),
+    url(r'^rankings/$', views.rankings, name='rankings'),
+    url(r'^(?P<filename>(robots.txt)|(humans.txt))$',
+            views.home_files, name='home-files'),
+    url(r'^accounts/', include('allauth.urls')),
 ]

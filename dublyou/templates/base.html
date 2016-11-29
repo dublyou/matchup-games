@@ -12,6 +12,8 @@
         <title>{% block title %}dublyou{% endblock %}</title>
 
         <link rel='icon' href=''>
+        <link rel="shortcut icon" href="{% static 'favicon.ico' %}"
+  type="image/x-icon">
 
         <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
         <link rel="stylesheet" href="{% static 'css/bootstrap-theme.min.css' %}">
@@ -19,37 +21,22 @@
 
         <script src="{% static 'js/vendor/modernizr-2.8.3-respond-1.4.2.min.js' %}"></script>
 
-        <script src="{% static 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js' %}"></script>
-
     </head>
 
     <body>
-        <div class="container">
-            <div id="navbar">
-                <ul>
-                {% for navbar_item in navbar}
-                    <li><a href="{{ navbar_item.url }}">{{ navbar_item.label }}"</a>
-                    {% if navbar_item.dropdown %}
-                        <ul>
-                        {% for dropdown_item in navbar_item.dropdown %}
-                            <li><a href="{{ dropdown_item.url }}">{{ dropdown_item.label }}"</a></li>
-                        {% endfor %}
-                        </ul>
-                    </li>
-                {% endfor %}
-                </ul>
-                <div id="search_bar">
-                    <input type="text" name="search_bar" placeholder="search...">
-                </div>
-            </div>
-        </div>
+        {% block navbar %}
+        {% include "navbar.html" with args=navbar only %}
+        {% endblock %}
         {% block body %}
-
+        <div class="page-content">
+            {% include "form.html" with args=form only %}
+            {% include "panel.html" with args=panel only %}
+        </div>
         {% endblock %}
 
-        <script src="{% static '//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js' %}"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
         <script>window.jQuery || document.write('<script src="static/js/vendor/jquery-1.11.2.min.js"><\/script>')</script>
-
+        <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
         <script src="{% static 'js/vendor/bootstrap.min.js' %}"></script>
 
         <script src="{% static 'js/main.js' %}"></script>

@@ -1,7 +1,7 @@
 {% if args.options %}
 <select class="form-control {{ args.classes }}" id="{{ args.id }}" name="{{ args.id }}" {% for prop in args.props %} {{ prop.name }}="{{ prop.value }}"{% endfor %}>
     <option value="">{{ args.placeholder }}</option>
-    {% for option in args.options}}
+    {% for option in args.options %}
     <option value="{{ option.value }}">{{ option.label }}</option>
     {% endfor %}
 </select>
