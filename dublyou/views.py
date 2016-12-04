@@ -7,6 +7,7 @@ from . import forms as myforms
 from django.forms.formsets import formset_factory
 from django.contrib.auth.decorators import login_required
 
+
 # pages
 def home(request):
 
@@ -15,15 +16,15 @@ def home(request):
              "classes": "pull-left xs-center-block xs-no-float sm-inline",
              "body_classes": "flex-cards",
              "body_content": [{"type": "template",
-                           "value": "panel.html",
-                           "args": ""},
-                          {"type": "template",
-                           "value": "panel.html",
-                           "args": ""},
-                          {"type": "template",
-                           "value": "panel.html",
-                           "args": ""}
-                          ]
+                               "value": "panel.html",
+                               "args": ""},
+                              {"type": "template",
+                               "value": "panel.html",
+                               "args": ""},
+                              {"type": "template",
+                               "value": "panel.html",
+                               "args": ""}
+                              ]
              }
     if request.user.is_authenticated:
         navbar_sections = [{"type": "reg",
@@ -34,17 +35,18 @@ def home(request):
                                       {"label": "Contact Us", "link": ""}
                                       ]
                             }]
+        form = None
     else:
         form = {"title": "Sign Up",
                 "id": "sign_up",
                 "classes": "pull-right xs-block xs-no-float sm-inline",
-                "form_fields": myforms.SignUpForm.as_input_group(),
+                "form_fields": myforms.SignUpForm().as_input_group(),
                 "submit_label": "Sign Up"
                 }
 
         navbar_sections = [{"type": "reg",
-                           "classes": "",
-                           "items": [{"label": "Rankings", "link": ""},
+                            "classes": "",
+                            "items": [{"label": "Rankings", "link": ""},
                                      {"label": "About Us", "link": ""},
                                      {"label": "Contact Us", "link": ""}
                                      ]
@@ -52,17 +54,17 @@ def home(request):
                            {"type": "form",
                             "classes": "navbar-right",
                             "members": [{"type": "email",
-                                       "classes": "",
-                                       "id": "sign_in_email",
-                                       "placeholder": "Email"},
-                                      {"type": "password",
-                                       "classes": "",
-                                       "id": "sign_in_password",
-                                       "placeholder": "Password"},
-                                      {"type": "submit",
-                                       "classes": "btn-primary",
-                                       "text": "Sign In"}
-                                      ]
+                                         "classes": "",
+                                         "id": "sign_in_email",
+                                         "placeholder": "Email"},
+                                        {"type": "password",
+                                         "classes": "",
+                                         "id": "sign_in_password",
+                                         "placeholder": "Password"},
+                                        {"type": "submit",
+                                         "classes": "btn-primary",
+                                         "text": "Sign In"}
+                                        ]
                             }]
 
     navbar = {"title": "dublyou",
@@ -78,8 +80,10 @@ def home(request):
 
 
 def rankings(request):
+    content = {}
 
     return render(request, "home.html", content)
+
 
 @login_required
 def profile_view(request):
@@ -96,39 +100,15 @@ def profile_view(request):
     content = {"args": {"title": "dublyou",
                         "navbar": navbar}}
 
-    return render(request, "home.html", Map(content))
+    return render(request, "home.html", content)
 
 
 def home_files(request, filename):
     return render(request, filename, {}, content_type="text/plain")
 
 
-# form handler
-
-def submit(request):
-    if request.method == 'POST':
-        form_data = request.POST
-
-        post = Post(text=post_text, author=request.user)
-        post.save()
-
-        response_data['result'] = 'Create post successful!'
-        response_data['postpk'] = post.pk
-        response_data['text'] = post.text
-        response_data['created'] = post.created.strftime('%B %d, %Y %I:%M %p')
-        response_data['author'] = post.author.username
-
-        return HttpResponse(
-            json.dumps(response_data),
-            content_type="application/json"
-        )
-    else:
-        return HttpResponse(
-            json.dumps({"nothing to see": "this isn't happening"}),
-            content_type="application/json"
-        )
-
-
+# form handlers
+@login_required
 def create_game(request):
     if request.method == 'POST':
 
@@ -149,7 +129,7 @@ def create_game(request):
                     for competitor_form in competitor_formset:
                         competitors.append(competitor_form.cleaned_data.get("competitor"))
             elif parent_comp_type == 2:
-
+                pass
             parent_event_form.set_competitors(competitors)
             parent_event_type = parent_event_form.cleaned_data.get("event_type")
 
@@ -170,10 +150,7 @@ def create_game(request):
 
                     return HttpResponseRedirect('/profile/')
                 else:
-                    return rendor_to_response(
-                        json.dumps({"nothing to see": "this isn't happening"}),
-                        content_type="application/json"
-                    )
+                    return "errors"
             else:
                 parent_event = parent_event_form.save()
 
@@ -182,10 +159,7 @@ def create_game(request):
 
                 return HttpResponseRedirect('/profile/')
         else:
-            return render_to_response(
-                json.dumps({"nothing to see": "this isn't happening"}),
-                content_type="application/json"
-            )
+            return "errors"
 
 
 def auth_view(request):

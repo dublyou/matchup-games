@@ -11,7 +11,7 @@ from django.db import models as db
 from django.utils.translation import ugettext_lazy as _
 
 DEFAULT_INPUT_CLASSES = "form-control"
-forms.BaseFormSet.management_form
+
 INPUT_CRITERIA = {
         "event_type": range(1, 5),
         "event_name": r"^[-\s\.\w\d]{1,20}$",
@@ -73,9 +73,9 @@ class MyBaseModelForm(forms.ModelForm):
 
 
 class SignUpForm(UserCreationForm):
-    email = forms.EmailField(required=True)
-    first_name = forms.CharField(required=True)
-    last_name = forms.CharField(required=True)
+    email = forms.EmailField(required=True, max_length=50)
+    first_name = forms.CharField(required=True, max_length=30)
+    last_name = forms.CharField(required=True, max_length=30)
 
     def __init__(self, *args, **kwargs):
         super(UserCreationForm, self).__init__(*args, **kwargs)
@@ -87,7 +87,7 @@ class SignUpForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ("username", "email", "password1", "password2", "first_name", "last_name")
+        fields = ("email", "password1", "password2", "first_name", "last_name")
 
     def as_input_group(self):
         return self._html_output(
