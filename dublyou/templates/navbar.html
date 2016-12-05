@@ -12,7 +12,7 @@
         <div class="collapse navbar-collapse">
         {% for section in args.sections %}
             {% if section.type == "form" %}
-            <form class="navbar-form {{ section.classes }}" role="search">
+            <form class="navbar-form {{ section.classes }}"> {% csrf_token %}
                 {% include "input_group.html" with args=section only %}
             </form>
             {% else %}

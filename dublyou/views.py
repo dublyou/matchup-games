@@ -2,14 +2,22 @@
 from django.shortcuts import render, render_to_response
 from django.http import HttpResponseRedirect
 from django.contrib import auth
-# from django.template.context_processors import csrf
+from django.template.context_processors import csrf
+from django.template import RequestContext
 from . import forms as myforms
 from django.forms.formsets import formset_factory
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_protect
 
 
 # pages
 def home(request):
+
+    if request.method == "POST":
+        form = myforms.SignUpForm(request.POST.get)
+        if form.is_valid():
+            form.save()
+            HttpResponseRedirect('')
 
     panel = {"id": "panel-cards",
              "title": "Leaders",
@@ -34,13 +42,19 @@ def home(request):
                                       {"label": "About Us", "link": ""},
                                       {"label": "Contact Us", "link": ""}
                                       ]
+                            },
+                           {"type": "reg",
+                            "classes": "navbar-right",
+                            "items": [{"label": "Logout", "link": "\logout\\"}]
                             }]
         form = None
     else:
         form = {"title": "Sign Up",
                 "id": "sign_up",
                 "classes": "pull-right xs-block xs-no-float sm-inline",
-                "form_fields": myforms.SignUpForm().as_input_group(),
+                "windows": [{"type": "form",
+                             "content": myforms.SignUpForm()}
+                            ],
                 "submit_label": "Sign Up"
                 }
 
@@ -55,11 +69,11 @@ def home(request):
                             "classes": "navbar-right",
                             "members": [{"type": "email",
                                          "classes": "",
-                                         "id": "sign_in_email",
+                                         "id": "username",
                                          "placeholder": "Email"},
                                         {"type": "password",
                                          "classes": "",
-                                         "id": "sign_in_password",
+                                         "id": "password",
                                          "placeholder": "Password"},
                                         {"type": "submit",
                                          "classes": "btn-primary",
@@ -107,62 +121,7 @@ def home_files(request, filename):
     return render(request, filename, {}, content_type="text/plain")
 
 
-# form handlers
-@login_required
-def create_game(request):
-    if request.method == 'POST':
-
-        user = request.user
-
-        parent_event_form = myforms.CreateGameForm(request.POST.get, user=user)
-
-        if parent_event_form.is_valid():
-
-            parent_comp_type = parent_event_form.cleaned_data.get("comp_type")
-
-            if parent_comp_type == 1:
-                CompetitorFormSet = formset_factory(myforms.CompetitorForm)
-                competitor_formset = CompetitorFormSet(request.POST.get, user=user)
-
-                if competitor_formset.is_valid():
-                    competitors = []
-                    for competitor_form in competitor_formset:
-                        competitors.append(competitor_form.cleaned_data.get("competitor"))
-            elif parent_comp_type == 2:
-                pass
-            parent_event_form.set_competitors(competitors)
-            parent_event_type = parent_event_form.cleaned_data.get("event_type")
-
-            if parent_event_type == 4:
-                OlympicEventFormSet = formset_factory(myforms.OlympicEventForm)
-
-                olympic_event_formset = OlympicEventFormSet(request.POST.get)
-
-                if olympic_event_formset.is_valid():
-
-                    parent_event = parent_event_form.save()
-
-                    for event_form in olympic_event_formset:
-                        event_form.save(parent_event)
-
-                    for competitor_form in competitor_formset:
-                        competitor_form.save(parent_event)
-
-                    return HttpResponseRedirect('/profile/')
-                else:
-                    return "errors"
-            else:
-                parent_event = parent_event_form.save()
-
-                for competitor_form in competitor_formset:
-                    competitor_form.save(parent_event)
-
-                return HttpResponseRedirect('/profile/')
-        else:
-            return "errors"
-
-
-def auth_view(request):
+def login(request):
     username = request.POST.get("username", "")
     password = request.POST.get("password", "")
     user = auth.authenticate(username=username, password=password)
@@ -172,7 +131,16 @@ def auth_view(request):
         return HttpResponseRedirect('/profile/')
 
 
-def logout_view(request):
+def logout(request):
     auth.logout(request)
     return HttpResponseRedirect('')
+
+
+def sign_up(request):
+    if request.method == "POST":
+        form = myforms.SignUpForm(request.POST.get)
+        if form.is_valid():
+            form.save()
+            HttpResponseRedirect('')
+
 

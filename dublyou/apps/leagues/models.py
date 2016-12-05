@@ -9,9 +9,9 @@ from ..games.models import GameType
 class League(models.Model):
     league_name = models.CharField(max_length=30)
     comp_type = models.IntegerField(choices=COMP_TYPES)
-    league_members = models.ManyToManyField(User, through='LeagueMember')
-    game_type = models.ManyToManyField(GameType, null=True)
-    commissioner = models.ForeignKey(User)
+    league_members = models.ManyToManyField(User, through='LeagueMember', related_name="members")
+    game_type = models.ManyToManyField(GameType)
+    commissioner = models.ForeignKey(User, related_name="commissioner")
     base_city = models.CharField(max_length=20, null=True)
     max_members = models.IntegerField(null=True, blank=True)
     creation_datetime = models.DateTimeField(auto_now_add=True)

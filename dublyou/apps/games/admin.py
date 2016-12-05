@@ -1,3 +1,4 @@
 from django.contrib import admin
+from .models import GameType, GameVenue, GameRule
 
-# Register your models here.
+admin.site.register(GameType)

@@ -54,8 +54,8 @@ class Game(models.Model):
     game_venue = models.ForeignKey(GameVenue, null=True)
     parent_event = models.ForeignKey(GameEvent)
     child_num = models.IntegerField(default=1)
-    competitors = models.ManyToManyField(User, through='Matchup', null=True)
-    teams = models.ManyToManyField(Team, through='TeamMatchup', null=True)
+    competitors = models.ManyToManyField(User, through='Matchup', through_fields=('game', 'competitor'))
+    teams = models.ManyToManyField(Team, through='TeamMatchup', through_fields=('game', 'competitor'))
     tourney_round = models.ForeignKey(TourneyRound, null=True)
     final = models.BooleanField(default=False)
     witness_id = models.CharField(max_length=50, null=True)
@@ -63,11 +63,11 @@ class Game(models.Model):
 
 
 class Matchup(models.Model):
-    game = models.ForeignKey(Game)
+    game = models.ForeignKey(Game, related_name="game")
     competitor = models.ForeignKey(User, null=True)
     dependent_type = models.IntegerField(null=True, choices=((1, "winner"), (2, "loser"), (3, "series")))
-    dependent_game = models.ForeignKey(Game)
-    dependent_series = models.ForeignKey(Series)
+    dependent_game = models.ForeignKey(Game, null=True)
+    dependent_series = models.ForeignKey(Series, null=True)
     game_on = models.BooleanField(default=False)
     place = models.IntegerField(null=True, blank=True)
     score = models.IntegerField(null=True, blank=True)
@@ -78,11 +78,11 @@ class Matchup(models.Model):
 
 
 class TeamMatchup(models.Model):
-    game = models.ForeignKey(Game)
+    game = models.ForeignKey(Game, related_name="teamgame")
     competitor = models.ForeignKey(Team)
     dependent_type = models.IntegerField(choices=((1, "winner"), (2, "loser"), (3, "series")))
-    dependent_game = models.ForeignKey(Game)
-    dependent_series = models.ForeignKey(Series)
+    dependent_game = models.ForeignKey(Game, null=True)
+    dependent_series = models.ForeignKey(Series, null=True)
     game_on = models.BooleanField(default=False)
     place = models.IntegerField(null=True, blank=True)
     score = models.IntegerField(null=True, blank=True)

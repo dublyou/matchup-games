@@ -249,7 +249,7 @@
 }
 
 .form-windows {
-    height: 400px;
+    max-height: 400px;
     overflow-y: auto;
     overflow-x: hidden;
     padding-left: 10px;
