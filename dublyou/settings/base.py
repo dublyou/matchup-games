@@ -48,7 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'dublyou.apps.player_profile',
-    'dublyou.apps.matchups',
+    'dublyou.apps.competitions',
     'dublyou.apps.leagues',
     'dublyou.apps.games',
 ]
@@ -61,15 +61,17 @@ INSTALLED_APPS += (
     'allauth.socialaccount',
     # Login via Google
     'allauth.socialaccount.providers.google',
-    # Login via Twitter
+    # # Login via Twitter
     'allauth.socialaccount.providers.twitter',
 )
 
 SITE_ID = 2
+
 ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_EMAIL_VERIFICATION = "none"
-SOCIALACCOUNT_QUERY_EMAIL = True
-LOGIN_REDIRECT_URL = "/"
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_FORMS = {}
+LOGIN_REDIRECT_URL = "/profile/"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -159,4 +161,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
+
+STATIC_ROOT = ''
 STATIC_URL = '/static/'
+
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_URL = '/media/'

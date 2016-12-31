@@ -1,25 +1,24 @@
 from django import forms
-from django.contrib.auth.models import User
-from django.contrib.auth.forms import UserCreationForm
 # from django.utils.translation import ugettext_lazy as _
 from .constants import DEFAULT_INPUT_CLASSES, INPUT_HTML_OUTPUT
 import re
+from allauth.account.forms import SignupForm
 
 
-class FormTree(object):
-    def __init__(self, *args, **kwargs):
-        pass
+class CustomFormMixin(object):
+    dependent_inputs = None
 
-
-class MyBaseForm(forms.Form):
-
-    def __init__(self, *args, **kwargs):
-        super(MyBaseForm, self).__init__(*args, **kwargs)
-
-        for field in self.fields:
+    def custom_init(self):
+        for name, field in self.fields.items():
+            field.label = field.label or name.title().replace("_", " ")
             field.widget.attrs.update({
-                'class': DEFAULT_INPUT_CLASSES
+                'class': DEFAULT_INPUT_CLASSES,
+                'placeholder': field.label
             })
+
+        if self.dependent_inputs:
+            for input_tree in self.dependent_inputs:
+                self.add_action_classes(input_tree)
 
     def as_input_group(self):
         return self._html_output(
@@ -49,60 +48,60 @@ class MyBaseForm(forms.Form):
                     self.clean_dependent_inputs(input_tree=dep_input, input_criteria=input_criteria)
         return valid
 
+    def add_action_classes(self, input_tree, action_class=None):
+        input_name = input_tree["name"]
+        if "fields" in input_tree:
+            self.fields[input_name].widget.attrs.update({
+                'onchange': "$(this).triggerAction()"
+            })
+            dependents = {}
+            recurse = []
+            for value, ls in input_tree["fields"]:
+                for dependent_field in ls:
+                    if type(dependent_field) == dict:
+                        field_name = dependent_field["name"]
 
-class MyBaseModelForm(forms.ModelForm):
+                    if dependent_field in dependents:
+                        dependents[field_name] += "--" + str(value)
+                    else:
+                        dependents[field_name] = str(value)
+                        if type(dependent_field) == dict:
+                            recurse.append(field_name)
+
+            for field_name, value in dependents.items():
+                classes = self.fields[field_name].widget.attrs["class"] + " " + action_class
+                self.fields[field_name].widget.attrs.update({
+                    'class': classes + "__action__" + input_name + "__" + value
+                })
+
+            for field_name in recurse:
+                self.add_action_classes(input_tree["fields"][field_name],
+                                        "__action__" + input_name + "__" + dependents[field_name])
+
+
+class MyBaseForm(forms.Form, CustomFormMixin):
+    def __init__(self, *args, **kwargs):
+        super(MyBaseForm, self).__init__(*args, **kwargs)
+        self.custom_init()
+
+
+class MyBaseModelForm(forms.ModelForm, CustomFormMixin):
     def __init__(self, *args, **kwargs):
         super(MyBaseModelForm, self).__init__(*args, **kwargs)
-
-        for field in self.fields:
-            field.widget.attrs.update({
-                'class': DEFAULT_INPUT_CLASSES
-            })
-
-    def as_input_group(self):
-        return self._html_output(
-            normal_row=INPUT_HTML_OUTPUT,
-            error_row='<li>%s</li>',
-            row_ender='</div>',
-            help_text_html=' <span class="helptext">%s</span>',
-            errors_on_separate_row=False)
+        self.custom_init()
 
 
-class SignUpForm(UserCreationForm):
-    email = forms.EmailField(label="Email", required=True, max_length=50)
+class ContactForm(MyBaseForm):
+    full_name = forms.CharField(required=False)
+    email = forms.EmailField()
+    message = forms.CharField(widget=forms.Textarea, max_length=1000)
+
+
+class MySignupForm(SignupForm, CustomFormMixin):
+
     first_name = forms.CharField(label="First Name", required=True, max_length=30)
     last_name = forms.CharField(label="Last Name", required=True, max_length=30)
 
     def __init__(self, *args, **kwargs):
-        super(UserCreationForm, self).__init__(*args, **kwargs)
-
-        for name, field in self.fields.items():
-            field.widget.attrs.update({
-                'class': DEFAULT_INPUT_CLASSES,
-                'placeholder': field.label
-            })
-
-    class Meta:
-        model = User
-        fields = ("email", "password1", "password2", "first_name", "last_name")
-
-    def as_input_group(self):
-        return self._html_output(
-            normal_row=INPUT_HTML_OUTPUT,
-            error_row='<li>%s</li>',
-            row_ender='</div>',
-            help_text_html=' <span class="helptext">%s</span>',
-            errors_on_separate_row=False)
-
-    def save(self, commit=True):
-        user = super(UserCreationForm, self).save(commit=False)
-
-        user.username = self.cleaned_data["email"]
-        user.email = self.cleaned_data["email"]
-        user.first_name = self.cleaned_data["first_name"]
-        user.last_name = self.cleaned_data["last_name"]
-
-        if commit:
-            user.save()
-
-        return user
+        super(SignupForm, self).__init__(*args, **kwargs)
+        self.custom_init()

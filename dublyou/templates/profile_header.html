@@ -1,48 +1,42 @@
-<div class="bg-wrap">
-  <img class="bg-image" width="100%" height="100%" src="{{ args.bg_image }}" alt="cover" />
-  <div class="bg-content">
-    <div class="panel panel-default profile-card">
-      <div class="panel-heading low-padding-vert" role="tab">
-        <h2 class="panel-title text-lg">{{ args.name }}</h2>
-      </div>
-      <div class="panel-body profile-details">
-        <div class="low-padding width-40">
-          <div class="wrap">
-            <img class="profile_pic" width="100%" height="100%" src="{{ args.image }}" alt="user" />
-            <div class="overlay">
-              <label class="text-center" for="profile_pic">Upload Photo&nbsp;<span class="glyphicon glyphicon-camera" aria-hidden="true"></span>
-                <input type="file" id="profile_pic" class="hidden" name="profile_pic">
-              </label>
+<div class="container-fluid">
+    <div class="wrap suttle-shadow">
+        <img class="background" width="100%" height="100%" src="{{ args.bg_image }}" alt="cover" />
+        <div class="wrap-content row xs-text-sm">
+            <div class="profile-name col-xs-12">{{ args.name }}</div>
+            <div class="profile-card col-xs-12 col-sm-8 col-md-6">
+                <div class="profile-details">
+                    <div class="wrap width-30 low-margin-horz pull-left">
+                        <img class="" width="100%" height="100%" src="{{ args.image }}" alt="user" />
+                        <div class="overlay">
+                            <label class="text-center" for="profile_pic">
+                                Upload Photo&nbsp;<span class="glyphicon glyphicon-camera" aria-hidden="true"></span>
+                                <input type="file" id="profile_pic" class="hidden" name="profile_pic">
+                            </label>
+                        </div>
+                    </div>
+                    {% for key, value in args.details.items %}
+
+                    <div class="info-group">
+                        <span class="info-label">{{ key|title }}:</span>
+                        <span class="info">{{ value }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
-          </div>
-          {% include "star_rating.html" rating=args.rating %}
+            <div class="col-xs-12 col-sm-4 col-md-offset-2">
+                <div class="panel panel-default">
+                    <table class="table table-bordered table-striped table-condensed">
+                    {% for stat in args.stats %}
+                        <tr>
+                            <th>{{ stat.label }}:</th>
+                            <td>{{ stat.value }}</td>
+                        </tr>
+                    {% endfor %}
+                    </table>
+                    <div class="panel-footer text-center low-padding-vert"><a href="/profile/stats/">More Stats</a></div>
+                </div>
+            </div>
         </div>
-        <table class="table table-condensed profile-table width-60">
-        {% for detail in args.details %}
-            <tr>
-                <td class="info-label">{{ detail.label }}</td>
-                <td>{{ detail.value }}</td>
-            </tr>
-        {% endfor %}
-        </table>
-      </div>
     </div>
-    <div class="panel panel-default inline-block pull-right">
-      <div class="panel-heading low-padding-vert" role="tab">
-        {% include "form_input.html" args=args.game_select %}
-      </div>
-      <table class="table table-bordered table-striped table-condensed">
-        <tbody>
-          {% for stat in args.stats %}
-            <tr>
-                <td class="info-label">{{ stat.label }}</td>
-                <td>{{ stat.value }}</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      <div class="panel-footer text-center low-padding-vert"><a href="#">More Stats</a></div>
-    </div>
-  </div>
 </div>
 

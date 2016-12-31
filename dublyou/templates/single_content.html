@@ -1,0 +1,17 @@
+{% extends "home.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block navbar %}
+    {% if navbar %}
+    {% include "navbar.html" with args=navbar csrf_token=csrf_token only %}
+    {% endif %}
+{% endblock %}
+
+{% block body_content %}
+<div class="container">
+    <div class="single-content">
+        {% include template with args=args csrf_token=csrf_token only %}
+    </div>
+</div>
+{% endblock %}

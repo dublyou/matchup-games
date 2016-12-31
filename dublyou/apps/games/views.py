@@ -1,3 +1,9 @@
 from django.shortcuts import render
 
-# Create your views here.
+
+def new_game(request):
+    pass
+
+
+def games_view(request):
+    pass

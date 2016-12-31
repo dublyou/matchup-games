@@ -1,0 +1,66 @@
+<table class="table table-bordered low-margin xs-text-sm">
+{% for member in args %}
+    {% with matchup=member.matchup %}
+    <tr>
+        <td>
+            <div class="flex-wrap">
+                <div class="info-group">
+                    <span class="info-label">Date:</span>
+                    <span class="info">{{ matchup.date }}</span>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">Time:</span>
+                    <span class="info">{{ matchup.time }}</span>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">Venue:</span>
+                    <span class="info">{{ matchup.venue.html_link }}</span>
+                </div>
+                <div class="info-group visible-xs">
+                    {% with opponents=member.opponents %}
+                    <span class="info-label">Opponent{{ opponents.count|pluralize }}:</span>
+                    <span class="info">
+                        {% include "dropdown_list.html" args=opponents %}
+                    </span>
+                </div>
+            </div>
+        </td>
+        <td class="">
+            <div class="info-group visible-xs">
+                <span class="info-label">Opponent{{ opponents.count|pluralize }}:</span>
+                <span class="info">
+                    {% include "dropdown_list.html" args=opponents %}
+                </span>
+            </div>
+                    {% endwith %}
+        </td>
+        <td class="">
+            {% with competition=matchup.competition %}
+            <div class="flex-wrap">
+                <div class="info-group">
+                    <span class="info-label">Name:</span>
+                    <span class="info">{{ competition.name|title }}</span>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">Game:</span>
+                    <span class="info">{{ competition.game_type }}</span>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">Type:</span>
+                    <span class="info">{{ competition.get_competition_type_display|title }}</span>
+                </div>
+            </div>
+            {% endwith %}
+        </td>
+        <td class="">
+            <div class="btn-group-vertical med-margin-vert">
+                <a role="button" class="btn btn-default" href="{{ matchup.get_absolute_url }}">View</a>
+                <a role="button" class="btn btn-default" href="{{ matchup.get_absolute_url }}edit/">Edit</a>
+            </div>
+        </td>
+    </tr>
+    {% endwith %}
+{% empty %}
+    <tr><td><a href="/competitions/new/">Set up a new competition now!</a></td></tr>
+{% endfor %}
+</table>

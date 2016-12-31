@@ -2,7 +2,7 @@
 {% for member in args.members %}
     {% if member.type == "button" or member.type == "submit" %}
     <span class="input-group-btn">
-        <button class="btn {{ member.classes }}" type="{{ member.type }}">{{ member.text }}</button>
+        <button class="btn {{ member.classes }}" type="{{ member.type }}">{{ member.text|safe }}</button>
     </span>
     {% elif member.type == "addon" %}
     <span class="input-group-addon">{{ member.text }}</span>

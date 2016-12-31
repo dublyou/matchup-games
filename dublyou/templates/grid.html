@@ -1,0 +1,24 @@
+{% for content in args %}
+{% if content.row == "new" %}
+    {% if not forloop.first %}
+        </div>
+    </div>
+    {% endif %}
+<div class="row">
+{% if content.col %}
+    <div class="{% for col_width in content.col %}col-{% cycle 'xs' 'sm' 'md' 'lg' %}-{{ col_width }} {% endfor %}">
+{% else %}
+    <div class="col-xs-12 col-sm-12">
+{% endif %}
+{% else %}
+{% if content.col %}
+    {% if not forloop.first %}
+    </div>
+    {% endif %}
+    <div class="{% for col_width in content.col %}col-{% cycle 'xs' 'sm' 'md' 'lg' %}-{{ col_width }} {% endfor %}">
+{% endif %}
+{% endif %}
+    {% include content.template with args=content.args csrf_token=csrf_token only %}
+{% endfor %}
+    </div>
+</div>

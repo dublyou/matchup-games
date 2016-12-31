@@ -16,17 +16,28 @@ Including another URLconf
 """
 from django.conf.urls import include, url
 from django.contrib import admin
+from django.conf import settings
+from django.conf.urls.static import static
 from . import views
 
 urlpatterns = [
-    url(r'^admin/', admin.site.urls),
-    url(r'^$', views.home, name='home'),
-    url(r'^profile/$', views.profile_view, name='profile_view'),
-    url(r'^sign_up/$', views.sign_up, name='sign_up'),
-    url(r'^login/$', views.login, name='login'),
-    url(r'^logout/$', views.logout, name='logout'),
-    url(r'^rankings/$', views.rankings, name='rankings'),
+    url(r'^(?:home/)?$', views.home, name='home'),
+    url(r'^bracket_builder$', views.home, name='bracket_builder'),
     url(r'^(?P<filename>(robots.txt)|(humans.txt))$',
-            views.home_files, name='home-files'),
-    url(r'^accounts/', include('allauth.urls')),
+        views.home_files, name='home-files'),
+    url(r'^contact/$', views.contact, name='contact'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += [
+        url(r'^admin/', admin.site.urls),
+        url(r'^profile/', include('dublyou.apps.player_profile.urls', namespace='profile'), name='profile'),
+        url(r'^leagues/', include('dublyou.apps.leagues.urls', namespace='league')),
+        url(r'^games/', include('dublyou.apps.games.urls', namespace='game')),
+        url(r'^competitions/', include('dublyou.apps.competitions.urls', namespace='competition')),
+        url(r'^sign_in/$', views.sign_in, name='sign_in'),
+        url(r'^sign_out/$', views.sign_out, name='sign_out'),
+        url(r'^accounts/', include('allauth.urls')),
+    ]
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

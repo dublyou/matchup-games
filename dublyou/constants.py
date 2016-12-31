@@ -1,23 +1,41 @@
 DEFAULT_INPUT_CLASSES = "form-control"
 
-INPUT_HTML_OUTPUT = '<div class="input-group low-margin-vert">%(errors)s<span class="input-group-addon hidden-xs">%(label)s</span> %(field)s</div>'
+INPUT_HTML_OUTPUT = """
+                    <div class="input-group low-margin-vert">
+                        %(errors)s
+                        <span class="input-group-addon hidden-xs">
+                            %(label)s
+                        </span>
+                        %(field)s
+                    </div>"""
 
-EVENT_TYPES = (
-    (1, "showdown"),
+STATUS_TYPES = (
+    (0, "incomplete"),
+    (1, "upcoming"),
+    (2, "dependency"),
+    (3, "in progress"),
+    (4, "finished"),
+    (5, "if necessary"),
+    (6, "overdue"),
+)
+
+COMPETITION_TYPES = (
+    (1, "matchup"),
     (2, "series"),
     (3, "tournament"),
     (4, "season"),
     (5, "olympics")
 )
 
-COMP_TYPES = (
+MATCHUP_TYPES = (
     (1, "individual"),
     (2, "team"),
 )
 
 RULE_TYPES = (
     (1, "scoring"),
-    (2, "other")
+    (2, "competitors"),
+    (3, "other")
 )
 
 SPLIT_TEAMS = (
@@ -128,3 +146,40 @@ SPORTS = (
     (14, "Bowling"),
     (15, "Darts"),
 )
+
+USER_NAVBAR = {
+    "brand": "dublyou",
+    "sections": [
+        {"type": "reg",
+         "classes": "",
+         "members": [{"label": "Home", "link": "/home/", "classes": ""},
+                     {"label": "Profile", "link": "/Profile/", "classes": ""}
+                     ]
+         },
+        {"type": "button",
+         "classes": "navbar-right med-margin-horz",
+         "label": "Logout", "link": "/accounts/logout/"
+         },
+        {"type": "form",
+         "classes": "navbar-right",
+         "members": [{"type": "select",
+                      "classes": "fit-width",
+                      "id": "",
+                      "placeholder": "Filter",
+                      "options": [{"label": "Users", "value": "user"},
+                                  {"label": "Teams", "value": "team"},
+                                  {"label": "Leagues", "value": "league"},
+                                  {"label": "Competitions", "value": "competitions"}
+                                  ]
+                      },
+                     {"type": "text",
+                      "classes": "",
+                      "id": "user_search",
+                      "placeholder": "Search"},
+                     {"type": "submit",
+                      "classes": "btn-primary",
+                      "text": '<span class="glyphicon glyphicon-search" aria-hidden="true"></span>'}
+                     ]
+         }
+    ]
+}

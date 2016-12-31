@@ -1,38 +1,40 @@
 <nav class="navbar navbar-inverse navbar-fixed-top">
     <div class="container-fluid">
         <div class="navbar-header">
-            <a class="navbar-brand" href="#">{{ args.title }}</a>
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#global-navbar" aria-expanded="false">
+            <a class="navbar-brand" href="/home/">{{ args.brand }}</a>
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
                 <span class="sr-only">Toggle navigation</span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
         </div>
-        <div class="collapse navbar-collapse">
+        <div id="navbar" class="collapse navbar-collapse">
         {% for section in args.sections %}
             {% if section.type == "form" %}
             <form class="navbar-form {{ section.classes }}"> {% csrf_token %}
                 {% include "input_group.html" with args=section only %}
             </form>
+            {% elif section.type == "button" %}
+            <a role="button" href="{{ section.link }}" class="btn btn-default navbar-btn {{ section.classes }}">{{ section.label }}</a>
             {% else %}
             <ul class="nav navbar-nav {{ section.classes }}">
-            {% for item in section.items %}
-                {% if item.dropdown %}
+            {% for member in section.members %}
+                {% if member.dropdown %}
                 <li class="dropdown">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ item.label }}</a>
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ member.label }}</a>
                     <ul class="dropdown-menu">
-                    {% for dropdown_item in item.dropdown.items %}
-                        {% if dropdown_item.type == "divider" %}
+                    {% for dropdown_member in member.dropdown.members %}
+                        {% if dropdown_member.type == "divider" %}
                         <li role="separator" class="divider"></li>
                         {% else %]
-                        <li><a href="{{ dropdown_item.link }}">{{ dropdown_item.label }}</a></li>
+                        <li><a href="{{ dropdown_member.link }}">{{ dropdown_member.label }}</a></li>
                         {% endif %}
                     {% endfor %}
                     </ul>
                 </li>
                 {% else %}
-                <li><a href="{{ item.link }}">{{ item.label }}</a></li>
+                <li class="{{ member.classes }}"><a href="{{ member.link }}">{{ member.label }}</a></li>
                 {% endif %}
             {% endfor %}
             </ul>
