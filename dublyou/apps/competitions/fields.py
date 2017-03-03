@@ -25,3 +25,4 @@ class GameField(forms.MultiValueField):
         else:
             return data_list[0]
 
+

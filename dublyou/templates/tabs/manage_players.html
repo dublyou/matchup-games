@@ -1,0 +1,87 @@
+{% if object.competitor_type == 2 or object.matchup_type == 1 %}
+<form method="post" action="{{ object.get_absolute_url }}invite/" autocomplete="off">
+    {% csrf_token %}
+    <div class="input-group margin-auto">
+        <div class="dropdown dropdown-lg search-dropdown" style="width:100%">
+            {{ args.add_form.player_search }}{{ args.add_form.player }}
+            <ul class="dropdown-menu search-results dropdown-menu-right" role="menu" style="width:100%">
+            </ul>
+        </div>
+        <div class="input-group-btn">
+            <button type="submit" class="btn btn-default">Invite</button>
+        </div>
+    </div>
+</form>
+
+<div class="container">
+    <div class="row">
+        <div class="col-xs-12 col-sm-12 {% if object.matchup_type == 1 %}col-md-6{% endif %}" style="overflow: auto;">
+            <form id="{{ args.id }}" method="post" action="{{ object.get_absolute_url }}players/">
+                {% csrf_token %}
+                <table class="table table-bordered table-striped table-condensed low-margin xs-text-sm">
+                    <caption>Players</caption>
+                    {% if object.players.all|length > 0 %}
+                    {% for player in object.players.all %}
+                    {% if forloop.first %}
+                    <thead><tr>
+                        <th>Player</th>
+                        <th>Delete</th>
+                    </tr></thead>
+                    <tbody>
+                    {% endif %}
+                        <tr>
+                            <td>{% include "profile/profile_button.html" with args=player %}</td>
+                            <td>
+                                <a role="button" class="btn btn-default btn-sm" href="{{ object.get_absolute_url }}{{ player.id ]}/delete/">
+                                    <span class="glyphicon glyphicon-trash"></span>
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                </table>
+                <p>No players yet... Use the controls above to invite your friends to compete.</p>
+                {% endif %}
+            </form>
+        </div>
+        <div class="col-xs-12 col-sm-12 {% if object.matchup_type == 1 %}col-md-6{% endif %}" style="overflow: auto;">
+            {% with invites=object.competitor_invites.all %}
+            <table class="table table-bordered table-striped table-condensed low-margin xs-text-sm">
+                <caption>Pending Invitations</caption>
+                {% if invites %}
+                <thead><tr>
+                    <th>Player</th>
+                    <th>Team</th>
+                    <th>Status</th>
+                    <th>Delete</th>
+                </tr></thead>
+                <tbody>
+                    {% for invite in invites %}
+                    <tr id="{{ invite.id }}">
+                        {% if invite.player %}
+                        <td>{% include "profile/profile_button.html" with args=invite.player %}</td>
+                        {% else %}
+                        <td>{{ invite.invite.email }}</td>
+                        {% endif %}
+                        <td>{{ invite.team }}</td>
+                        <td>{{ invite.status }}</td>
+                        <td>
+                            <a role="button" class="btn btn-default btn-sm width-100" href="{{ invite.get_absolute_url }}delete/">
+                                <span class="glyphicon glyphicon-trash"></span>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            </table>
+            <p>No pending invitations. Use the controls above to invite your friends.</p>
+            {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+</div>
+{% endif %}

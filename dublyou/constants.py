@@ -1,5 +1,7 @@
 DEFAULT_INPUT_CLASSES = "form-control"
 
+NAME_REGEX = r"^[-\s\.\w\d]{1,30}$"
+
 INPUT_HTML_OUTPUT = """
                     <div class="input-group low-margin-vert">
                         %(errors)s
@@ -9,14 +11,69 @@ INPUT_HTML_OUTPUT = """
                         %(field)s
                     </div>"""
 
+PLAYOFF_DI = {"name": "playoff_format",
+              "fields": {
+                  None: [],
+                  1: ["playoff_bids"],
+                  2: ["playoff_bids"],
+                  3: ["playoff_bids"]
+              }}
+
+SEASON_TYPE_DI = {"name": "season_type",
+                  "fields": {
+                      1: ["rounds"],
+                      2: ["season_games"]
+                  }}
+
+MATCHUP_TYPE_DI = {"name": "matchup_type",
+                   "fields": {
+                       1: [],
+                       2: ["split_teams", "players_per_team"]
+                   }}
+
+COMPETITION_DI = {"name": "competition_type",
+                  "fields": {
+                      1: ["game"],
+                      2: ["game", "series_games", "series_type"],
+                      3: ["game", "tourney_type", "tourney_seeds"],
+                      4: ["game", SEASON_TYPE_DI, PLAYOFF_DI],
+                      5: []
+                  }}
+
+INPUT_CRITERIA = {
+    "event_type": range(1, 5),
+    "name": r"^[-\s\.\w\d]{1,30}$",
+    "comp_type": range(1, 3),
+    "players_per_team": range(2, 33),
+    "split_teams": range(1, 3),
+    "league": r"^[-\s\.\w\d]{1,30}$",
+    "series_games": range(3, 16, 2),
+    "tourney_type": range(1, 3),
+    "tourney_seeds": range(1, 3),
+    "season_scheduling_type": range(1, 3),
+    "round_robin": range(1, 11),
+    "season_games": range(2, 163, 2),
+    "playoff_bids": range(2, 33),
+    "playoff_format": [None, 1, 2, "series"],
+    "num_events": range(2, 17),
+    "game_rules": r"^[-\n\s\.\w\d]{1,300}$",
+    "game_location": "^[-\s\.\w\d]{1,30}$",
+}
+
+PLAYERS_PER_TEAM = ((x, x) for x in INPUT_CRITERIA["players_per_team"])
+SERIES_GAMES = ((x, x) for x in INPUT_CRITERIA["series_games"])
+SEASON_GAMES = ((x, x) for x in INPUT_CRITERIA["season_games"])
+PLAYOFF_BIDS = ((x, x) for x in INPUT_CRITERIA["playoff_bids"])
+
 STATUS_TYPES = (
     (0, "incomplete"),
     (1, "upcoming"),
     (2, "dependency"),
-    (3, "in progress"),
+    (3, "pending"),
     (4, "finished"),
     (5, "if necessary"),
-    (6, "overdue"),
+    (6, "unnecessary"),
+    (7, "deleted")
 )
 
 COMPETITION_TYPES = (
@@ -39,8 +96,8 @@ RULE_TYPES = (
 )
 
 SPLIT_TEAMS = (
-    (1, "random"),
-    (2, "manual")
+    (1, "manual"),
+    (2, "random")
 )
 
 SERIES_TYPES = (
@@ -62,7 +119,7 @@ TOURNEY_SEEDS = (
 
 SEASON_TYPES = (
     (1, "round robin"),
-    (2, "input")
+    (2, "games")
 )
 
 STATES = (
@@ -148,13 +205,10 @@ SPORTS = (
 )
 
 USER_NAVBAR = {
-    "brand": "dublyou",
     "sections": [
         {"type": "reg",
          "classes": "",
-         "members": [{"label": "Home", "link": "/home/", "classes": ""},
-                     {"label": "Profile", "link": "/Profile/", "classes": ""}
-                     ]
+         "members": [{"label": "Profile", "link": "/Profile/", "classes": ""}]
          },
         {"type": "button",
          "classes": "navbar-right med-margin-horz",

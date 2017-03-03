@@ -1,0 +1,58 @@
+<div class="container">
+    <h2 class="title">Sign Up Page</h2>
+    <form method="POST" action="{{ object.get_absolute_url }}manage_signup/">
+        {% csrf_token %}
+    {% if object.signup_page %}
+    {% with page=object.signup_page %}
+        <table class="table table-bordered low-margin xs-text-sm">
+            <tbody>
+                <tr>
+                    <th>Link</th>
+                    <td class="hidden-xs"><div class="well well-sm no-margin" style="overflow: auto; display: inline-block; max-width: 200px; max-height: 60px; word-wrap: break-word;">
+                        matchup-games.com{{ page.get_absolute_url }}</div>
+                    </td>
+                    <td>
+                        <a role="button" class="btn btn-default width-100 text-center" href="{{ page.get_absolute_url }}">View</a>
+                        <span class="button-checkbox">
+                            <button type="button" class="btn width-100" data-color="primary">Change Key</button>
+                            <span class="hidden">{{ form.change_key }}</span>
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Expiration</th>
+                    <td class="hidden-xs">{{ page.expiration }}</td>
+                    <td>{{ form.expiration }}</td>
+                </tr>
+                <tr>
+                    <th>Image</th>
+                    <td class="hidden-xs"><img src="{{ page.image.url }}"></td>
+                    <td>{{ form.msg_image }}</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="flex">
+            <button type="button" class="btn btn-primary" onclick="fb_send();">Invite Your Facebook Friends</button>
+            <button type="submit" class="btn btn-primary">Update</button>
+        </div>
+
+        <script>
+            var link = 'https://matchup-games.com{{ page.get_absolute_url }}';
+            function fb_send() {
+                FB.ui({
+                  method: 'send',
+                  app_id: {{ facebook_app.client_id }},
+                  link: link,
+                  redirect_uri: 'https://matchup-games.com',
+                  message: 'Join my new competition',
+                });
+            }
+        </script>
+    {% include "socialapps/fbsdk_script.html" with app_id=facebook_app.client_id %}
+    {% endwith %}
+    {% else %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Create</button>
+    {% endif %}
+    </form>
+</div>

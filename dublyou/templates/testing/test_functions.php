@@ -14,7 +14,7 @@
 
                     <title>dublyou</title>
 
-                    <link rel='icon' href=''>";
+                    <link rel='icon' href='$static_root/svg/mg_icon.png'>";
 
         foreach ($stylesheets as $sheet) {
             $output .= "\n<link rel='stylesheet' href='$static_root/css/$sheet'>";

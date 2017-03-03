@@ -1,0 +1,14 @@
+<a role="button" class="btn btn-default ajax-link low-margin-vert" href="{{ object.get_absolute_url}}upload_video/">Upload Video</a>
+{% with origin=request.META.HTTP_HOST %}
+{% if object_list %}
+	{% for video in object_list %}
+	<div class="panel panel-default">
+		{% include "youtube/video.html" with video_id=video.video_id origin=origin %}
+		<div class="panel-footer">
+			<h3 class="panel-title">{{ video.title }}</h3>
+			{{ video.description }}
+		</div>
+	</div>
+	{% endfor %}
+{% endif %}
+{% endwith %}

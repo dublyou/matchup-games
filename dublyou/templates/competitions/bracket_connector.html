@@ -1,0 +1,28 @@
+{% load competitions_extra %}
+{% with width=10 size=size|default:round %}
+{% if round > 0 %} {
+    height = ((29 + 5) * Math.pow(2, size));
+<svg height="' + height + '" width="' + width + '" style="position:absolute;left:-{{ width|divide:2 }}px;top:' + ((-height / 2) + 29) + 'px" class="connect round-{{ round }} game-{{ game1 }}">
+    <line x1="' + (width / 2) + '" y1="' + (height / 2) + '" x2="' + width + '" y2="' + (height / 2) + '"/>
+    <line class="top" x1="' + (width / 2) + '" y1="0" x2="' + (width / 2) + '" y2="' + (height / 2) + '"/>
+    <line class="top" x1="0" y1="0" x2="' + (width / 2) + '" y2="0"/>
+</svg>
+<svg height="' + height + '" width="' + width + '" style="position:absolute;left:' + (-width / 2) + 'px;top:' + ((-height / 2) + 29) + 'px" class="connect round-{{ round }} ' game-{{ game2 }}">
+    <line x1="' + (width / 2) + '" y1="' + (height / 2) + '" x2="' + width + '" y2="' + (height / 2) + '"/>
+    <line class="bottom" x1="' + (width / 2) + '" y1="' + (height / 2) + '" x2="' + (width / 2) + '" y2="' + height + '"/>
+    <line class="bottom" x1="0" y1="' + height + '" x2="' + (width / 2) + '" y2="' + height + '"/>
+</svg>
+{% elif round == 0 %}
+    height = 30 + (29 * (size - 1));
+    <svg height="' + height + '" width="' + width + '" style="position:absolute;left:' + (-width / 2) + 'px;top:0px" class="connect round-{{ round }} + '">
+        <line x1="0" y1="' + (height / 2) + '" x2="' + width + '" y2="' + (height / 2) + '"/>
+    </svg>
+{% elif round == -1 %}
+    height = 15;
+    <svg height="' + height + '" width="' + width + '" style="position:absolute;left:' + (-width / 2) + 'px;top:29px" class="connect round-{{ round }} game-{{ game1 }}">
+        <line x1="' + (width / 2) + '" y1="0" x2="' + (width / 2) + '" y2="' + height + '"/>
+        <line x1="' + (width / 2) + '" y1="' + height + '" x2="' + width + '" y2="' + height + '"/>
+        <line x1="0" y1="0" x2="' + (width / 2) + '" y2="0"/>
+    </svg>
+{% endif %}
+{% endwith %}

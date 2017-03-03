@@ -1,242 +1,721 @@
 # -*- coding: utf-8 -*-
-from django.shortcuts import render
+import json
+
+from django.core import serializers
+from django.shortcuts import reverse
 from django.http import HttpResponseRedirect
+from django.views.generic import FormView
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.template.loader import render_to_string
+
+from invitations.forms import InviteForm
+from allauth.socialaccount.models import SocialApp
+
 from . import models
 from . import forms
-from ...views import ProfileView, ModelFormView, ModelFormSetView
-from ..leagues.models import League
-from django.forms.formsets import formset_factory
-from django.contrib.auth.decorators import login_required
+from ..youtube.models import MatchupVideo
+from ..youtube.forms import MatchupVideoForm
+from .permissions import CompetitionPermissions, MatchupPermissions, CompetitorPermissions
+from ...views import ProfileView, ActionView, EditView, NewObjectView, JsonResponse, \
+    NewChildObjectView, ManageView, ListView, ObjectPermissionsMixin, UpdateView, DetailView
 
 
 @login_required
-def new_competition(request):
-    if request.method == 'POST':
-
-        user = request.user
-
-        competition_form = forms.CompetitionForm(request.POST.get, user=user)
-
-        if competition_form.is_valid():
-            cleaned_data = competition_form.cleaned_data
-            event_type = cleaned_data["event_type"]
-            valid = True
-            event_form = None
-            if event_type in range(2, 5):
-                if event_type == 2:
-                    event_form = forms.SeriesForm(request.POST.get)
-                elif event_type == 3:
-                    event_form = forms.TournamentForm(request.POST.get)
-                elif event_type == 4:
-                    event_form = forms.SeasonForm(request.POST.get)
-                valid = event_form.is_valid()
-
-            if valid:
-                competition = competition_form.save()
-                if event_form:
-                    event_form.save(competition=competition)
-
-                league = League.objects.create(league_name="Competition " + str(competition.id),
-                                               comp_type=cleaned_data["comp_type"],
-                                               game_type=cleaned_data["game_type"] or None,
-                                               commissioner=user,
-                                               dummy_league=True
-                                               )
-                competition.league = league
-                competition.save()
-
-                if event_type == 5:
-                    return HttpResponseRedirect('/olympic_events/' + str(competition.id))
-                elif cleaned_data["comp_by"] == 1:
-                    if cleaned_data["comp_type"] == 2:
-                        return HttpResponseRedirect('/add_teams/comp' + str(competition.id))
-                    elif cleaned_data["comp_type"] == 1:
-                        return HttpResponseRedirect('/add_members/comp' + str(competition.id))
-                else:
-                    return HttpResponseRedirect('/events/' + str(competition.id))
-
-    form = {
-        "title": "New Competition",
-        "windows": [
-            {"id": "new_competition", "classes": "", "type": "formset",
-             "content": [
-                 forms.CompetitionForm(),
-                 forms.CompetitorInfoForm(user=request.user),
-                 forms.SeriesForm(),
-                 forms.TournamentForm(),
-                 forms.SeasonForm()
-             ]
-             }
-        ],
-        "submit_label": "Create"
-    }
-
-    content = {"navbar": "",
-               "template": "form.html",
-               "args": form
-               }
-
-    return render(request, "single_content.html", content)
+def get_competitions(request):
+    user = request.user
+    if user.is_authenticated():
+        return HttpResponseRedirect("/profile/{}/competitions/".format(user.profile.id))
 
 
-@login_required
-def olympic_events(request, comp_id):
+class NewCompetitionView(LoginRequiredMixin, NewObjectView):
+    form_title = "New Competition"
+    form_id = None
+    form_action = None
+    submit_label = "Create"
+    form_class = forms.CompetitionForm
+    success_url = "/competitions/{id}/"
 
-    competition = models.Competition.object.filter(id=comp_id, competition_type=5)
+    def get_initial(self):
+        initial = super(NewCompetitionView, self).get_initial()
+        kwargs = self.kwargs
+        field = kwargs.get("field")
+        if field:
+            initial.update({field: kwargs.get(field)})
+        return initial
 
-    if competition.exists() and competition.get().creator == request.user:
-        competition = competition.get()
-        EventFormSet = formset_factory(forms.CompetitionForm(user=request.user, olympic_id=comp_id))
-
-        if request.method == 'POST':
-            formset = EventFormSet(request.POST.get)
-
-            if formset.is_valid():
-                for form in formset:
-                    form.save(parent=competition)
-
-                if competition.comp_by == 1:
-                    if competition.comp_type == 2:
-                        return HttpResponseRedirect('/add_teams/comp' + str(competition.id))
-                    elif competition.comp_type == 1:
-                        return HttpResponseRedirect('/add_members/comp' + str(competition.id))
-                    else:
-                        return HttpResponseRedirect('/events/' + str(competition.id))
-        else:
-
-            form = {
-                "title": "Add Events",
-                "windows": [
-                    {"id": "olympic_events", "type": "formset", "content": EventFormSet(),
-                     "props": ""
-                     },
-                ],
-                "submit_label": "Add Events",
-                "submit_props": ""
-            }
-
-            content = {"navbar": "",
-                       "template": "form.html",
-                       "args": form
-                       }
-
-            return render(request, "single_content.html", content)
-    else:
-        return render(request, "404.html")
+new_competition = NewCompetitionView.as_view()
 
 
-def events_view(request):
-    leagues = request.user.leagues.all()
-    events = models.Competition.objects.filter(league__in=leagues)
-
-    nav_tabs = {
-        "tabs": [{"id": "tournaments", "label": "Tournaments",
-                  "content": {"type": "template", "value": "events_table.html",
-                              "args": events.filter(competition_type=3)}},
-                 {"id": "seasons", "label": "Seasons",
-                  "content": {"type": "template", "value": "events_table.html",
-                              "args": events.filter(competition_type=4)}},
-                 {"id": "olympics", "label": "Olympics",
-                  "content": {"type": "template", "value": "events_table.html",
-                              "args": events.filter(competition_type=5)}},
-                 ]
-    }
-
-    content = {"navbar": "",
-               "contents": [
-                   {"template": "nav_tabs.html", "args": nav_tabs}
-               ]}
-
-    return render(request, "my_base.html", content)
-
-
-class CompetitonView(ProfileView):
+class EditCompetitionView(EditView):
     model = models.Competition
-    detail_names = ["competition_type", "game_type", ""]
-    stat_names = []
-    tab_names = ["schedule", "results", "standings", "bracket", "events", "playoffs"]
+    permission_logic = CompetitionPermissions
+    permission_required = "edit_competition"
+    login_required = True
+    form_class = forms.EditCompetitionForm
+    form_title = "Edit Competition"
+
+edit_competition = EditCompetitionView.as_view()
+
+
+class AddEventView(NewChildObjectView):
+    model = models.Competition
+    permission_required = "manage_events"
+    permission_logic = CompetitionPermissions
+    form_class = forms.CompetitionForm
+
+add_event = AddEventView.as_view()
+
+
+class ManageEventsView(ManageView):
+    model = models.Competition
+    inline_model = models.Competition
+    permission_logic = CompetitionPermissions
+    permission_required = "manage_events"
+    form_title = "Manage Events"
+    form_class = forms.EditCompetitionForm
+    success_url = "competitions/{id}/"
+    include_template_name = "tabs/manage_events.html"
+    add_form_class = forms.CompetitionForm
+    fk_name = "parent"
+
+manage_events = ManageEventsView.as_view()
+
+
+class CompetitionView(ProfileView):
+    model = models.Competition
+    permission_logic = CompetitionPermissions
+    details = ["competition_type__display", "competition_details", "game", "events__list",
+               "creator__btn", "competitors__list", "players__list", "parent__btn",
+               "status__display", "date__formatted", "time__formatted"]
+    stats = []
+    tabs = [
+        {"name": "competition_upcoming_matchups",
+         "template": "matchups",
+         "label": "Upcoming Matchups"},
+        {"name": "competition_matchup_results",
+         "template": "matchups",
+         "label": "Matchup Results"},
+        {"name": "competition_bracket",
+         "label": "Bracket"},
+        {"name": "competition_standings",
+         "label": "Standings",
+         "template": "standings"},
+        {"name": "manage_events"},
+        {"name": "manage_competitors"},
+        {"name": "manage_competition_signup",
+         "label": "Manage Sign Up",
+         "template": "manage_signup"}
+    ]
+    toolbar = [
+        {"classes": "ajax-link",
+         "btns": [{"name": "create_matchups",
+                   "kwargs": {"pk": "object__id"}},
+                  {"name": "join_competition",
+                   "kwargs": {"pk": "object__id"}},
+                  {"name": "competition_withdraw",
+                   "label": "Withdraw",
+                   "kwargs": {"pk": "object__id"}},
+                  ]
+         },
+        {"classes": "ajax-link",
+         "btns": [{"name": "edit_competition",
+                   "kwargs": {"pk": "object__id"},
+                   "glyph": "edit"},
+                  {"name": "delete_competition",
+                   "kwargs": {"pk": "object__id"},
+                   "glyph": "trash"},
+                  ]
+         }
+    ]
+
+    def get_context_data(self, **kwargs):
+        ctx = super(CompetitionView, self).get_context_data(**kwargs)
+        if self.object.competition_type == 3:
+            ctx["scripts"] = [{"name": "js/bracketv2.js"},
+                              {"name": "js/competition_bracket.js"}]
+        return ctx
+
+
+class DeleteCompetition(ActionView):
+    model = models.Competition
+    permission_logic = CompetitionPermissions
+    permission_required = "delete_competition"
+    login_required = True
+    success_url = "/profile/"
+    verb = "delete"
+
+    def run_process(self, request, *args, **kwargs):
+        instance = self.object
+        if instance.status > 2:
+            instance.status = 7
+            instance.save()
+        else:
+            instance.delete()
+
+delete_competition = DeleteCompetition.as_view()
+
+
+class CreateCompetitionMatchups(ActionView):
+    model = models.Competition
+    permission_logic = CompetitionPermissions
+    permission_required = "create_matchups"
+    login_required = True
+    success_url = "/competitions/{id}/"
+    verb = "create"
+
+    def get_warning(self):
+        warning = super(CreateCompetitionMatchups, self).get_warning()
+        warnings = [warning]
+        if self.object.competitors.filter(status=0).exists():
+            warnings.insert(0, "If you move forward any pending competitors will be deleted.")
+        if self.object.invites.exists():
+            warnings.insert(0, "If you move forward any pending invitations will expire.")
+        if self.object.matchups.exists():
+            warnings.insert(0, "If you move forward existing matchups will be deleted.")
+        return " ".join(warnings)
+
+    def get_errors(self):
+        errors = []
+        min_competitors = 2 if self.object.competition_type != 3 else 3
+        if self.object.competitors.filter(status=1).count() < min_competitors:
+            errors.append("Must have at least {} competitors.".format(min_competitors))
+        if self.object.status > 2:
+            errors.append("Your competition is already in progress.")
+        return errors
+
+    def run_process(self, request, *args, **kwargs):
+        self.object.create_matchups()
+
+create_matchups = CreateCompetitionMatchups.as_view()
 
 
 class MatchupView(ProfileView):
     model = models.Matchup
-    detail_names = ["game_type", "date", "time", "venue", "witness"]
-    stat_names = []
-    tab_names = []
-
-
-def detail_view(request, event_id):
-
-    event = models.Competition.objects.get(id=event_id)
-    event_type = event.event_type
-
-    if event_type in range(3, 6):
-        body_content = [
-            {"type": "template", "value": "info_group.html",
-             "args": {"label": "Event Type", "value": event.get_event_type_display()}},
-            {"type": "template", "value": "info_group.html",
-             "args": {"label": "Competitor Type", "value": event.get_comp_type_display()}}
-        ]
-
-        nav_tabs = {
-            "tabs": [{"id": "upcoming_games", "label": "Upcoming Games",
-                      "content": {"type": "template", "value": "events_table.html",
-                                  "args": None}},
-                     {"id": "results", "label": "Results",
-                      "content": {"type": "template", "value": "events_table.html",
-                                  "args": None}},
-                     ]
-        }
-
-        if event_type == 3:
-            games = event.game_set.all()
-
-            nav_tabs["tabs"].append({"id": "bracket", "label": "Bracket"})
-
-            if games.count() > 0:
-                events = event.competition_set.all()
-                
-            t_body_content = [
-                {"type": "template", "value": "info_group.html",
-                 "args": {"label": "Game", "value": event.game_type.game_name}},
-                {"type": "template", "value": "info_group.html",
-                 "args": {"label": "Tourney Type", "value": event.get_tourney_type_display()}}
+    permission_logic = MatchupPermissions
+    details = ["winner__btn", "status__display", "competition__link", "game__link",
+               "date__formatted", "time__formatted", "venue", "rules", "notes",
+               "witness", "competitors__versus"]
+    stats = []
+    tabs = [{"name": "manage_result"},
+            {"name": "matchup_videos",
+             "label": "Videos",
+             "template": "videos"},
+            {"name": "box_score"},
+            {"name": "lineup"},
             ]
-            body_content += t_body_content
-        elif event_type == 4:
+    toolbar = [
+        {"classes": "",
+         "btns": [{"name": "add_witness",
+                   "kwargs": {"pk": "id"}},
+                  {"name": "approve_witness",
+                   "kwargs": {"pk": "id"}},
+                  ]
+         },
+        {"classes": "ajax-link",
+         "btns": [{"name": "upload_matchup_video",
+                   "label": "Upload Video",
+                   "kwargs": {"pk": "object__id"},
+                   "glyph": "upload"},
+                  {"name": "edit_matchup",
+                   "kwargs": {"pk": "object__id"},
+                   "glyph": "edit"}
+                  ]
+         }
+    ]
 
-            nav_tabs["tabs"].extend([{"id": "standings", "label": "Standings"},
-                                     {"id": "playoffs", "label": "Playoffs"}
-                                     ])
 
-            t_body_content = [
-                {"type": "template", "value": "info_group.html",
-                 "args": {"label": "Game", "value": event.game_type.game_name}},
-                {"type": "template", "value": "info_group.html",
-                 "args": {"label": "Season Games", "value": event.season_games}}
-            ]
-            body_content += t_body_content
+class EditMatchupView(EditView):
+    model = models.Matchup
+    permission_logic = MatchupPermissions
+    permission_required = "edit_matchup"
+    login_required = True
+    form_class = forms.MatchupForm
+    form_title = "Edit Matchup"
+
+edit_matchup = EditMatchupView.as_view()
+
+
+class ManageResultView(ManageView):
+    model = models.Matchup
+    inline_model = models.MatchupCompetitor
+    permission_logic = MatchupPermissions
+    permission_required = "manage_result"
+    login_required = True
+    form_title = "Manage Result"
+    form_class = forms.MatchupResultForm
+    formset_class = forms.MatchupResultFormset
+    success_url = "/competitions/matchups/{id}/"
+    include_template_name = "tabs/manage_result.html"
+    can_delete = False
+
+manage_result = ManageResultView.as_view()
+
+
+class UpcomingMatchupsView(ListView):
+    template_name = "base.html"
+    include_template_name = "matchups.html"
+    model = models.Competition
+    permission_logic = CompetitionPermissions
+    object_list_attr = "upcoming_matchups"
+
+upcoming_matchups = UpcomingMatchupsView.as_view()
+
+
+class MatchupResultsView(ListView):
+    template_name = "base.html"
+    include_template_name = "matchups.html"
+    model = models.Competition
+    permission_logic = CompetitionPermissions
+    object_list_attr = "matchup_results"
+
+matchups_results = MatchupResultsView.as_view()
+
+
+class StandingsView(ListView):
+    template_name = "base.html"
+    include_template_name = "standings.html"
+    model = models.Competition
+    permission_logic = CompetitionPermissions
+    object_list_attr = "results"
+
+    def get_object_list(self):
+        if self.object_list_attr:
+            getattr(self.object, self.object_list_attr)
+            return getattr(self.object, self.object_list_attr)
+
+competition_standings = StandingsView.as_view()
+
+
+class BracketView(ListView):
+    template_name = "base.html"
+    include_template_name = "competition_bracket.html"
+    model = models.Competition
+    permission_logic = CompetitionPermissions
+    object_list_attr = "competitors"
+
+    def get_object_list(self):
+        object_list = super(BracketView, self).get_object_list()
+        competitors = []
+        for obj in object_list:
+            competitor_btn = render_to_string("profile/profile_button.html", {"args": obj})
+            competitors.append(str(competitor_btn))
+        return json.dumps(competitors)
+
+    def get_context_data(self, **kwargs):
+        ctx = super(BracketView, self).get_context_data(**kwargs)
+        winners = self.object.matchup_competitors.filter(place=1)
+        winners_data = {}
+        for winner in winners:
+            competitor_btn = render_to_string("profile/profile_button.html", {"args": winner.competitor})
+            winners_data[winner.matchup.child_num] = {"name": competitor_btn,
+                                                      "seed": winner.seed}
+        losers = self.object.matchup_competitors.filter(place=2)
+        losers_data = {}
+        for loser in losers:
+            competitor_btn = render_to_string("profile/profile_button.html", {"args": loser.competitor})
+            losers_data[loser.matchup.child_num] = {"name": competitor_btn,
+                                                    "seed": loser.seed}
+
+        ctx["winners"] = json.dumps(winners_data)
+        ctx["losers"] = json.dumps(losers_data)
+        return ctx
+
+competition_bracket = BracketView.as_view()
+
+
+class CompetitorView(ProfileView):
+    model = models.Competitor
+    permission_logic = CompetitorPermissions
+    details = ["competition__link", "captain__btn", "players__list"]
+    stats = ["record"]
+    tabs = [
+        {"name": "competitor_upcoming_matchups",
+         "template": "matchup_competitors",
+         "label": "Upcoming Matchups"},
+        {"name": "competitor_matchup_results",
+         "template": "matchup_competitors",
+         "label": "Matchup Results"},
+        {"name": "competitor_manage_players",
+         "template": "manage_players",
+         "label": "Manage Players"}
+    ]
+    toolbar = [
+        {"classes": "",
+         "btns": [{"name": "join_competitor",
+                   "kwargs": {"pk": "object__id"}}
+                  ]
+         },
+        {"classes": "",
+         "btns": [{"name": "edit_competitor",
+                   "kwargs": {"pk": "object__id"},
+                   "glyph": "edit"}
+                  ]
+         }
+    ]
+
+competitor = CompetitorView.as_view()
+
+
+class EditCompetitorView(EditView):
+    model = models.Competitor
+    permission_logic = CompetitorPermissions
+    permission_required = "edit_competitor"
+    login_required = True
+    form_class = forms.EditCompetitorForm
+    form_title = "Edit Competitor"
+
+edit_competitor = EditCompetitorView.as_view()
+
+
+class CompetitorUpcomingMatchupsView(ListView):
+    template_name = "base.html"
+    include_template_name = "matchup_competitors.html"
+    model = models.Competitor
+    permission_logic = CompetitorPermissions
+    object_list_attr = "upcoming_matchups"
+
+competitor_upcoming_matchups = CompetitorUpcomingMatchupsView.as_view()
+
+
+class CompetitorMatchupResultsView(ListView):
+    template_name = "base.html"
+    include_template_name = "matchup_competitors.html"
+    model = models.Competitor
+    permission_logic = CompetitorPermissions
+    object_list_attr = "matchup_results"
+
+competitor_matchups_results = CompetitorMatchupResultsView.as_view()
+
+
+class ManageCompetitorsView(ManageView):
+    model = models.Competition
+    inline_model = models.Competitor
+    permission_logic = CompetitionPermissions
+    permission_required = "manage_competitors"
+    form_title = "Manage Competitors"
+    form_class = forms.EditCompetitorForm
+    success_url = "/competitions/{id}/"
+    include_template_name = "tabs/manage_competitors.html"
+    add_form_class = forms.AddCompetitorForm
+    can_delete = True
+
+manage_competitors = ManageCompetitorsView.as_view()
+
+
+class ManagePlayersView(ObjectPermissionsMixin, DetailView):
+    model = models.Competitor
+    permission_logic = CompetitorPermissions
+    permission_required = "competitor_manage_players"
+    login_required = True
+    template_name = "base.html"
+    include_template_name = "tabs/manage_players.html"
+    add_form_class = forms.CompetitorInviteForm
+
+    def get_template_names(self):
+        self.template_name = self.kwargs.get("template_name") or self.template_name
+        return super(ManagePlayersView, self).get_template_names()
+
+    def get_context_data(self, **kwargs):
+        ctx = super(ManagePlayersView, self).get_context_data(**kwargs)
+        ctx["args"] = {"add_form": self.add_form_class(parent=self.object),
+                       "object_type": "competitor"}
+        ctx["template"] = self.include_template_name
+        return ctx
+
+competitor_manage_players = ManagePlayersView.as_view()
+
+
+class ManageCompetitionSignUpView(UpdateView):
+    model = models.Competition
+    include_template_name = "tabs/manage_signup.html"
+    permission_logic = CompetitionPermissions
+    permission_required = "manage_competition_signup"
+    form_title = "Manage Competition Sign Up"
+    form_class = forms.CompetitionSignUpForm
+    success_url = "/competitions/{id}/"
+    template_name = "base.html"
+
+    def get_template_names(self):
+        self.template_name = self.kwargs.get("template_name") or self.template_name
+        return super(ManageCompetitionSignUpView, self).get_template_names()
+
+    def get_context_data(self, **kwargs):
+        ctx = super(ManageCompetitionSignUpView, self).get_context_data(**kwargs)
+        ctx["template"] = self.include_template_name
+        ctx["facebook_app"] = SocialApp.objects.filter(provider="facebook").first()
+        return ctx
+
+manage_competition_signup = ManageCompetitionSignUpView.as_view()
+
+
+class MatchupVideoUploadView(NewChildObjectView):
+    model = models.Matchup
+    permission_logic = MatchupPermissions
+    form_class = MatchupVideoForm
+    form_title = "Upload Video"
+    submit_label = "Upload"
+    permission_required = "upload_matchup_video"
+    template_name = "base.html"
+
+matchup_video_upload = MatchupVideoUploadView.as_view()
+
+
+class MatchupVideosView(ListView):
+    template_name = "base.html"
+    include_template_name = "videos.html"
+    model = models.Matchup
+    permission_logic = MatchupPermissions
+    object_list_attr = "videos"
+
+matchup_videos = MatchupVideosView.as_view()
+
+
+class CompetitionInviteView(NewChildObjectView):
+    model = models.Competition
+    permission_logic = CompetitionPermissions
+    form_class = forms.AddCompetitorForm
+    permission_required = "manage_competitors"
+    template_name = "base.html"
+
+competition_invite = CompetitionInviteView.as_view()
+
+
+class CompetitorInviteView(NewChildObjectView):
+    model = models.Competitor
+    permission_logic = CompetitorPermissions
+    permission_required = "competitor_invite"
+    form_class = forms.CompetitorInviteForm
+    template_name = "base.html"
+
+competitor_invite = CompetitorInviteView.as_view()
+
+
+class JoinCompetition(ActionView):
+    model = models.Competition
+    permission_logic = CompetitionPermissions
+    permission_required = "join_competition"
+    login_required = True
+    success_url = "/profile/"
+    verb = "join"
+
+    def get_errors(self):
+        errors = []
+        competition = self.object
+        player = self.request.user.profile
+        if player in competition.players:
+            errors.append("You have already joined this competition.")
+        invites = competition.invites.filter(player=player)
+        if invites.filter(invite_type=3).exists() and not invites.filter(invite_type=1).exists():
+            errors.append(
+                "You have already requested to join this competition. Please wait for the creator to approve your request."
+            )
+        if competition.status > 2:
+            errors.append("You cannot join the competition because it has already started.")
+        return errors
+
+    def run_process(self, request, *args, **kwargs):
+        competition = self.object
+        player = request.user.profile
+        invites = models.CompetitionInvite.objects.filter(player=player,
+                                                          competition=competition,
+                                                          invite_type=1)
+        if invites.exists():
+            invite = invites.first()
+            invite.accept()
         else:
-            nav_tabs["tabs"][:0] = [{"id": "events", "label": "Events"}]
-            nav_tabs["tabs"].append({"id": "standings", "label": "Standings"})
+            invite, created = models.CompetitionInvite.objects.get_or_create(player=player,
+                                                                             competition=competition,
+                                                                             invite_type=3)
+            if created:
+                signup = getattr(competition, "signup_page", None)
+                if signup and not signup.key_expired():
+                    invite.invite_type = 3
+                    invite.save()
+                else:
+                    invite.delete()
+                    return True
+                invite.accept()
 
-            t_body_content = [
-                {"type": "template", "value": "info_group.html",
-                 "args": {"label": "Events", "value": event.num_children}}
-            ]
-            body_content += t_body_content
+join_competition = JoinCompetition.as_view()
 
-        panel = {
-            "id": "",
-            "classes": "",
-            "title": event.event_name,
-            "body_classes": "flex-wrap",
-            "body": body_content
-        }
 
-        content = {"navbar": "",
-                   "contents": [
-                       {"template": "panel.html", "args": panel},
-                       {"template": "nav_tabs.html", "args": nav_tabs}
-                   ]}
+class JoinCompetitor(ActionView):
+    model = models.Competition
+    permission_logic = CompetitorPermissions
+    permission_required = "join_competitor"
+    login_required = True
+    success_url = "/profile/"
+    verb = "join"
 
-        return render(request, "my_base.html", content)
+    def get_errors(self):
+        errors = []
+        instance = self.object
+        competition = instance.competition
+        player = self.request.user.profile
+        if player in competition.players:
+            errors.append("You have already joined this competition.")
+        if competition.status > 2:
+            errors.append("You cannot join the competition because it has already started.")
+        return errors
+
+    def run_process(self, request, *args, **kwargs):
+        instance = self.object
+        player = request.user.profile
+        invites = instance.competitor_invites.filter(player=player)
+        if invites.exists():
+            invite = invites.first()
+            invite.accept()
+
+join_competitor = JoinCompetitor.as_view()
+
+
+class CompetitionSignupView(CompetitionView, FormView):
+    model = models.Competition
+    template_name = 'tabs/signup.html'
+    form_class = InviteForm
+    permission_logic = CompetitionPermissions
+    permission_required = "competition_signup"
+    login_required = False
+
+    def get_context_data(self, **kwargs):
+        ctx = super(CompetitionSignupView, self).get_context_data(**kwargs)
+        if "form" in kwargs:
+            ctx["form"] = kwargs["form"]
+        if self.request.user.is_authenticated() and self.permissions.has_perm("join_competition"):
+            ctx["join_url"] = reverse("join_competition", kwargs={"pk": self.kwargs["pk"]})
+        return ctx
+
+    def form_valid(self, form):
+        email = form.cleaned_data["email"]
+
+        try:
+            invite = form.save(email)
+            invite.inviter = self.request.user
+            invite.save()
+            invite.send_invitation(self.request)
+            models.CompetitionInvite.create(competition=self.object,
+                                            invite=invite,
+                                            invite_type=3)
+        except Exception:
+            return self.form_invalid(form)
+        return self.render_to_response(
+            self.get_context_data(
+                success_message='%s has been invited' % email))
+
+    def form_invalid(self, form):
+        return self.render_to_response(self.get_context_data(form=form))
+
+    def dispatch(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        signup = models.CompetitionSignUpPage.objects.filter(verification_key=kwargs["key"], competition=self.object)
+        # No signup was found.
+        if signup.exists():
+            signup = signup.get()
+            # The key was expired.
+            if signup.key_expired():
+                return HttpResponseRedirect("/")
+        else:
+            return HttpResponseRedirect("/")
+        return super(CompetitionSignupView, self).dispatch(request, *args, **kwargs)
+
+competition_signup = CompetitionSignupView.as_view()
+
+
+class WithdrawFromCompetition(ActionView):
+    model = models.Competition
+    permission_logic = CompetitionPermissions
+    permission_required = "competition_withdraw"
+    login_required = True
+    success_url = "/profile/"
+    verb = "withdraw"
+    past_verb = "withdrew"
+
+    def get_errors(self):
+        errors = []
+        competition = self.object
+        if competition.status > 2:
+            errors.append("You cannot withdraw from the competition because it has already started.")
+        return errors
+
+    def run_process(self, request, *args, **kwargs):
+        competition = self.object
+        player = request.user.profile
+        c = competition.get_competitor(player)
+        if c:
+            if c.competitor_type == 1:
+                c.delete()
+            else:
+                c.players.remove(player)
+                if c.captain == player:
+                    c.captain = None
+                    c.save()
+
+competition_withdraw = WithdrawFromCompetition.as_view()
+
+
+class AcceptCompetitionInvite(ActionView):
+    model = models.Competition
+    permission_logic = CompetitionPermissions
+    permission_required = "accept_competition_invite"
+    login_required = True
+    success_url = "/profile/"
+    verb = "accept"
+
+    def get_errors(self):
+        errors = []
+        competition = self.object
+        if competition.status > 2:
+            errors.append("You cannot accept the competition invitation because it has already started.")
+        return errors
+
+    def run_process(self, request, *args, **kwargs):
+        pending_invite = request.user.profile.competition_invites.filter(pk=kwargs["pk2"])
+        if pending_invite.exists():
+            pending_invite.get().accept()
+        return True
+
+accept_competition_invite = AcceptCompetitionInvite.as_view()
+
+
+class ApproveCompetitionInvite(ActionView):
+    model = models.Competition
+    success_url = "/competitions/{id}/"
+    permission_logic = CompetitionPermissions
+    permission_required = "manage_competitors"
+    login_required = True
+    verb = "approve"
+
+    def get_errors(self):
+        errors = []
+        competition = self.object
+        if competition.status > 2:
+            errors.append("You cannot approve the competition invitation because it has already started.")
+        return errors
+
+    def run_process(self, request, *args, **kwargs):
+        competition = self.object
+        pending_member = competition.invites.filter(pk=kwargs["pk2"])
+        if pending_member.exists():
+            pending_member.get().approve()
+        return True
+
+approve_competition_invite = ApproveCompetitionInvite.as_view()
+
+
+class DeleteCompetitionInvite(ActionView):
+    model = models.Competition
+    success_url = "/competitions/{id}/"
+    permission_logic = CompetitionPermissions
+    permission_required = "manage_competitors"
+    login_required = True
+    verb = "delete"
+
+    def run_process(self, request, *args, **kwargs):
+        competition = self.object
+        pending_member = competition.invites.filter(pk=kwargs["pk2"])
+        if pending_member.exists():
+            pending_member.get().delete()
+        return True
+
+delete_competition_invite = DeleteCompetitionInvite.as_view()

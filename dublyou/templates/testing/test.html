@@ -3,7 +3,7 @@
     <nav class="navbar navbar-inverse navbar-fixed-top">
         <div class="container-fluid">
             <div class="navbar-header">
-                <a class="navbar-brand" href="#">dublyou</a>
+                <a class="navbar-brand" href="/home/"><img alt="matchup-games" width="50px" height="25px" src="../../static/svg/mg_logo3.svg"></a>
                 <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
                     <span class="sr-only">Toggle navigation</span>
                     <span class="icon-bar"></span>
@@ -68,19 +68,35 @@
                 <div id="view_options" class="margin-auto-horz med-margin-vert">
                     <label>Show:&nbsp;</label>
                     <div class="btn-group" data-toggle="buttons">
-                        <label class="btn btn-default">
-                            <input type="checkbox" name="view_options" id="winners_check" value="bracket" autocomplete="off"> Winners
+                        <label for="winners_check" class="btn btn-default active">
+                            <input type="checkbox" name="view_options" id="winners_check" value="bracket" checked> Winners
                         </label>
-                        <label class="btn btn-default active">
-                            <input type="checkbox" name="view_options" id="losers_check" value="losers-bracket" autocomplete="off" checked> Losers
+                        <label for="losers_check" class="btn btn-default active">
+                            <input type="checkbox" name="view_options" id="losers_check" value="losers-bracket" checked> Losers
                         </label>
                     </div>
                 </div>
                 <div id="round_slider" class="margin-auto-horz med-margin-vert">
                     <div id="slider-range">
+                        <div id="low_round" class="btn-group btn-group-xs ui-slider-handle ui-state-default ui-corner-all" style="" role="group">
+                            <div class="btn-group-wrap">
+                                <div class="btn-group btn-group-xs">
+                                    <button class="btn btn-default" data-bound="0" data-increment="-1"><span class="glyphicon glyphicon-minus" aria-hidden="true"></span></button>
+                                    <button class="btn btn-default" data-bound="0" data-increment="1"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="high_round" class="ui-slider-handle ui-state-default ui-corner-all" style="" role="group">
+                            <div class="btn-group-wrap">
+                                <div class="btn-group btn-group-xs">
+                                    <button class="btn btn-default" data-bound="1" data-increment="-1"><span class="glyphicon glyphicon-minus" aria-hidden="true"></span></button>
+                                    <button class="btn btn-default" data-bound="1" data-increment="1"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
+                                </div>
+                            </div>
+                        </div>
                         <div class="range-labels">
-                            <span class="text-xs" style="position:absolute;left:0;top:15px">Round 1</span>
-                            <span class="text-xs" style="position:absolute;right:0;top:15px">Champion</span>
+                            <span class="text-xs" style="position:absolute;left:-5px;top:15px">Round 1</span>
+                            <span class="text-xs" style="position:absolute;right:-5px;top:15px">Champion</span>
                         </div>
                     </div>
                 </div>

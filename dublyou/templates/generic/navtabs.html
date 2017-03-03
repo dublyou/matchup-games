@@ -1,0 +1,32 @@
+<div class="container-fluid" style="margin-bottom: 20px">
+    <ul class="nav nav-tabs nav-justified med-padding-horz">
+    {% for tab in args %}
+        <li class="{% if forloop.first %}active{% endif %}">
+            <a data-toggle="tab" href="#{{ tab.name }}">{{ tab.label }}
+                {% if tab.badge %}<span class="badge">{{ tab.badge }}</span>{% endif %}
+            </a>
+        </li>
+    {% endfor %}
+        <li role="presentation" class="dropdown collapsed-tabs">
+            <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+              Select&nbsp;<span class="caret"></span>
+            </a>
+            <ul class="dropdown-menu">
+            {% for tab in args %}
+                <li role="presentation" class="{% if forloop.first %}active{% endif %}"><a data-toggle="tab" href="#{{ tab.name }}">{{ tab.label }}</a></li>
+            {% endfor %}
+            </ul>
+        </li>
+    </ul>
+    <div class="tab-content suttle-shadow med-padding" style="min-height: 300px">
+    {% for tab in args %}
+        <div id="{{ tab.name }}" class="tab-pane fade {% if forloop.first %}active in{% endif %}">
+            {% if tab.content.type == "template" %}
+                {% include tab.content.value with args=tab.content.args }}
+            {% else %}
+                {{ tab.content }}
+            {% endif %}
+        </div>
+    {% endfor %}
+    </div>
+</div>

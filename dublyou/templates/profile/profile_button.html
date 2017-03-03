@@ -1,0 +1,12 @@
+<a{% if type != "select_list" %} href="{{ args.get_absolute_url }}"{% endif %}{% if not type %}
+role="button" class="btn btn-default btn-sm {% if display != "inline" %}flex{% endif %}"
+style="padding:0;padding-right:4px;min-width:100px;text-align:left;{% if display == "inline" %}max-width:150px;overflow:hidden{% endif %}"
+{% endif %}>
+    <span class="fit-width no-padding-vert" style="margin: -1px">
+        <img width="30px" height="30px" {% if not type %}style="border-radius: 4px 0 0 4px"{% endif %}
+             src="{{ args.profile_image }}" alt="{{ args }}"/>
+    </span>
+    <span class="no-padding-vert width-100 text-left text-sm" style="margin-left: 5px">
+        {{ args.name }}
+    </span>
+</a>

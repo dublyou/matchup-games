@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block meta_tags %}
+{% with signup=object.signup_page %}
+<meta property="og:url"           content="https://matchup-games.com{{ signup.get_absolute_url }}" />
+<meta property="og:type"          content="website" />
+<meta property="og:title"         content="Join My Competition" />
+<meta property="og:description"   content="{{ object.description }}" />
+<meta property="og:image"         content="https://matchup-games.com/static{{ signup.image }}" />
+<meta property="fb:app_id"        content="206066206525148" />
+{% endwith %}
+{% endblock %}
+
+{% block content %}
+    {% include "profile/profile_header.html" with args=header %}
+    <div class="container">
+        {% if user.is_authenticated %}
+        <a role="button" href="{{ join_url }}" class="btn btn-primary btn-lg center-block">Join Competition</a>
+        {% else %}
+        <h2 class="title">Competition Sign Up</h2>
+        <p>If you have an account, then please
+            <a role="button" href="{% url 'account_login' %}?next={{ object.signup.get_absolute_url }}" class="btn btn-primary btn-sm">login here</a>
+            to join this competition. Otherwise, enter your email below and follow the instructions in the email to complete the sign up.</p>
+        <form id="invite-form" method="POST" action="">
+        {% csrf_token %}
+            <div class="form-group">
+                <input type="text" name="email" id="id_email" class="form-control validate-email" placeholder="Enter your email address...">
+            </div>
+            <button type="submit" class="btn btn-primary">Join</button>
+            {% for error in form.email.errors %}
+            <div class="alert alert-danger alert-dismissible" role="alert">
+                <span class="alert-message">{{ error }}</span>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            {% endfor %}
+            <p>{{ success_message }}</p>
+        </form>
+        {% endif %}
+    </div>
+{% endblock %}

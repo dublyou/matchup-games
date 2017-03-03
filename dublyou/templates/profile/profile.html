@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block toolbar %}
+    {% if toolbar %}
+    {% include "generic/toolbar.html" with args=toolbar %}
+    {% endif%}
+{% endblock %}
+
+{% block content %}
+    {% include "profile/profile_header.html" with args=header %}
+    {% include "generic/navtabs.html" with args=navtabs %}
+{% endblock %}

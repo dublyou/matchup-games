@@ -1,0 +1,20 @@
+<table class="table table-bordered table-condensed table-striped xs-text-sm">
+{% for member in object_list %}
+    {% if forloop.first %}
+    <tr>
+        {% for key, value in member.items %}
+        <th>{{ key|title }}</th>
+        {% endfor %}
+    </tr>
+    {% endif %}
+    <tr>
+        {% for key, value in member.items %}
+        {% if key == 'competitor' %}
+        <td>{% include "profile/profile_button.html" with args=value %}</td>
+        {% else %}
+        <td>{{ value }}</td>
+        {% endif %}
+        {% endfor %}
+    </tr>
+{% endfor %}
+</table>

@@ -1,0 +1,38 @@
+<div class="container">
+    <form id="{{ args.id }}" method="post" action="{{ object.get_absolute_url }}manage_result/">
+        {% csrf_token %}
+        {{ args.formset.management_form }}
+        <table class="table table-bordered table-striped table-condensed low-margin xs-text-sm">
+        {% if args.formset|length > 0 %}
+            {% for form in args.formset %}
+            {% if forloop.first %}
+            <thead><tr>
+                <th>Competitor</th>
+                {% for field in form.visible_fields %}
+                <th>{{ field.label }}</th>
+                {% endfor %}
+            </tr></thead>
+            <tbody>
+            {% endif %}
+                <tr>
+                    <td>{% include "profile/profile_button.html" with args=form.instance.competitor %}</td>
+                    {% for field in form.visible_fields %}
+                    <td>{{ field }}{{ field.errors }}</td>
+                    {% endfor %}
+                    {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% if args.formset.errors %}
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            {{ args.formset.non_form_errors }}
+        </div>
+        {% endif %}
+        <button type="submit" class="btn btn-default center-block">Update</button>
+        {% else %}
+        </table>
+        {% endif %}
+    </form>
+</div>

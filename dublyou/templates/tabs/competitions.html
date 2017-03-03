@@ -1,0 +1,53 @@
+{% extends "generic/object_list.html" %}
+
+{% block tbody %}
+{% for competition in object_list %}
+    {{ competition.competition.name }}
+    <tr>
+        <td class="">
+            <div class="flex-wrap">
+                <div class="info-group">
+                    <span class="info-label">Description:</span>
+                    <span class="info">{{ competition }}</span>
+                </div>
+                {% if competition.competition_type == 5 %}
+                <div class="info-group">
+                    <span class="info-label">Events:</span>
+                    <span class="info">
+                        {% include "profile/profile_dropdown.html" with args=competition.children.all display='inline' %}
+                    </span>
+                </div>
+                {% elif competition.game %}
+                <div class="info-group">
+                    <span class="info-label">Game:</span>
+                    <span class="info">
+                        {% include "profile/profile_button.html" with args=competition.game display='inline' %}
+                    </span>
+                </div>
+                {% endif %}
+                <div class="info-group">
+                    <span class="info-label">Status:</span>
+                    <span class="info">{{ competition.get_status_display|title }}</span>
+                </div>
+            </div>
+        </td>
+        {% with competitors=competition.competitors %}
+        <td class="hidden-xs">
+            <div class="info-group">
+                <span class="info-label">Competitor{{ competitors.count|pluralize }}:</span>
+                <span class="info">
+                    {% include "profile/profile_dropdown.html" with args=competitors %}
+                </span>
+            </div>
+        </td>
+        {% endwith %}
+        <td class="">
+            <a role="button" class="btn btn-default btn-sm width-100" href="{{ competition.get_absolute_url }}">View</a>
+        </td>
+    </tr>
+{% empty %}
+    <tr><td>Sorry, no competitions yet. Set up a
+        <a role="button" class="btn btn-default btn-sm" href="{% url 'new_competition' %}">new competition</a> now!
+    </td></tr>
+{% endfor %}
+{% endblock %}

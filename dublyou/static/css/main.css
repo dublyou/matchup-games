@@ -46,15 +46,15 @@ body {
 }
 
 .input-group select.form-control {
-  padding-right: 30px;
+  padding-right: 10px;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
   -webkit-appearance: none;
   -moz-appearance: none;
-  background-image: linear-gradient(135deg, transparent 50%, gray 50%), linear-gradient(45deg, gray 50%, transparent 50%), linear-gradient(45deg, transparent 50%, gray 50%), linear-gradient(135deg, gray 50%, transparent 50%);
-  background-position: calc(100% - 17.5px) calc(1em - 5px), calc(100% - 12.5px) calc(1em - 5px), calc(100% - 17.5px) calc(1em + 3px), calc(100% - 12.5px) calc(1em + 3px);
-  background-size: 5px 5px, 5px 5px, 5px 5px, 5px 5px;
+  background-image: url('/static/svg/select_arrows.svg');
+  background-position: calc(100% + 3px) 7px;
+  background-size: 20px 14px;
   background-repeat: no-repeat;
 }
 
@@ -66,11 +66,35 @@ body {
 .input-group-addon,
 .input-group-btn {
     width: auto;
+    line-height: 1.42857143;
 }
 
 .input-group-addon > label {
     margin-bottom: 0;
     line-height: 20px
+}
+
+.input-group .input-group-addon,
+.input-group .input-group-btn,
+.input-group .form-control {
+  z-index: 1
+}
+
+.input-group>*:not(:first-child):not(:last-child) .input-group-addon,
+.input-group>*:not(:first-child):not(:last-child) .input-group-btn,
+.input-group>*:not(:first-child):not(:last-child) .input-group-btn .btn,
+.input-group>*:not(:first-child):not(:last-child) .form-control {
+  border-radius: 0;
+}
+
+.input-group .input-group-addon:not(:first-child),
+.input-group .input-group-btn:not(:first-child),
+.input-group .form-control:not(:first-child) {
+  border-left: 0;
+}
+
+select.hidden-select {
+    display: none !important;
 }
 
 @media (max-width: 768px) {
@@ -131,6 +155,10 @@ body {
     .navbar-form .input-group {
         display: flex
     }
+    
+    .navbar-collapse .hover-dropdown:hover .dropdown-menu {
+        display: block;
+    }
 }
 
 .flex-cards {
@@ -152,6 +180,7 @@ body {
 .info-group {
   text-overflow: ellipsis;
   margin: 2px 10px;
+    line-height: 30px;
 }
 
 .info-label {
@@ -253,19 +282,6 @@ body {
   margin-left: -5px
 }
 
-.hover-dropdown {
-    position: relative;
-    display: inline-block;
-}
-
-.hover-dropdown a {
-    text-decoration: none;
-}
-
-.hover-dropdown:hover .dropdown-menu {
-    display: block;
-}
-
 .hover-lighter:hover {
     opacity: .8;
 }
@@ -341,12 +357,11 @@ body {
 
 
 form .alert {
-    z-index: 15;
+    z-index: 10;
     position: absolute;
     top: 0;
     margin-left: 5%;
     width: 90%;
-    height: 100%;
 }
 
 td > .table-btn {
@@ -370,7 +385,7 @@ label.panel-title {
     font-weight: bold;
     cursor: default;
     border: 1px solid #ddd;
-    z-index: 10;
+    z-index: 1;
 }
 
 .nav-tabs > li > a {
@@ -407,7 +422,9 @@ label.panel-title {
 
 .tab-content {
     border-radius: 5px;
-    border: 1px solid #ddd;  
+    border: 1px solid #ddd;
+    min-height: 300px;
+    overflow: auto
 }
 
 .footer {
@@ -416,23 +433,6 @@ label.panel-title {
     margin-top: -40px;
     background-color: #222;
     border-color: #080808;
-}
-
-#backdrop {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background-color: black;
-    transition: opacity 500ms;
-    opacity: 0.5;
-    z-index: 9;
-    visibility: hidden;
-}
-
-#backdrop:target {
-    visibility: visible
 }
 
 .select-filter {
@@ -555,20 +555,6 @@ span.chars-left {
 .grip {
   position: absolute;
   right: 0;
-}
-
-.close {
-    position: absolute !important;
-    top: -10px !important;
-    right: -10px !important;
-    font-size: 25px !important;
-}
-
-#backdrop .close {
-    top: 50px !important;
-    right: 20px !important;
-    font-size: 25px !important;
-    color: white; 
 }
 
 .bg-white {
@@ -903,6 +889,9 @@ fieldset {
     border: 1px solid #ddd;
     border-radius: 4px;
     box-shadow: inset 0 3px 5px rgba(0,0,0,.125);
+    overflow: auto;
+    max-width: 100%;
+    max-height: 500px;
 }
 
 .matchup-member {
@@ -913,17 +902,17 @@ fieldset {
   visibility: hidden;
 }
 
-/*.competitor.winner {
-    background-color: #c2f0c2
-}
-
-.competitor.loser {
-    background-color: #ff9999
-}*/
-
 .matchup-group {
     box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2);
     margin: 5px;
+}
+
+.matchup-member.winner {
+    font-weight: bold;
+}
+
+.matchup-member.loser {
+    color: #888;
 }
 
 .matchup-member:first-child td {
@@ -946,11 +935,57 @@ fieldset {
     overflow-x: hidden;
     text-align: left;
     margin-left: -1px;
+    padding: 0px;
+}
+
+.matchup-member td.name .btn {
+  border-radius: 0;
+  border: none;
+    overflow: hidden;
+}
+
+.matchup-member.winner td.name .btn {
+    font-weight: bold;
+}
+
+.matchup-member.loser td.name .btn {
+    color: #888
 }
  
 .matchup-member td.seed {
     width: 40px;
     background-color: #eee;
+}
+
+.matchup-member td.score {
+    width: 40px;
+    margin-left: -1px;
+}
+
+.matchup-member.winner td.score {
+    background-color: #c2f0c2
+}
+
+.matchup-member td.advance-competitor {
+    width: 20px;
+    margin-left: -1px;
+    padding: 4px 0px;
+}
+
+td.advance-competitor button {
+    padding: 0;
+    border: none;
+    background: none;
+}
+
+td.advance-competitor:hover {
+    background-color: #eee;
+}
+
+@media (min-width: 768px) {
+    td.advance-competitor {
+        display: none;
+    }
 }
 
 .bracket-header {
@@ -986,6 +1021,10 @@ fieldset {
     box-shadow: inset 0 10px 10px rgba(0,0,0,.125)
 }
 
+.connect.bye {
+    visibility: hidden;
+}
+
 .bracket-options {
   display: flex;
   justify-content: space-between;
@@ -1014,4 +1053,53 @@ fieldset {
 .textarea-group .help-text {
     font-size: 10px;
     margin: 2px;
+}
+
+.btn-group-wrap>.btn-group {
+    position: absolute;
+    white-space: nowrap;
+    width: 44px;
+    right: -10px;
+    top: -2px;
+    font-size: 8px;
+}
+
+.btn-group-wrap .glyphicon-plus,
+.btn-group-wrap .glyphicon-minus {
+    font-size: 10px
+}
+
+.object-list-wrap {
+    overflow: auto;
+    max-height: 400px;
+    box-shadow: inset 0 0 1px 0 rgba(0,0,0,.4), inset 0px 5px 8px 1px rgba(0, 0, 0, .125);
+    padding: 5px;
+}
+
+table.object-list {
+  border-collapse: separate;
+  border-spacing: 3px 10px;
+}
+
+table.object-list>tbody>tr>td {
+  border-top: none !important;
+  margin-top: 4px !important;
+  box-shadow: 0 0 1px 0 rgba(0,0,0,.4), 0px 5px 5px 0 rgba(0, 0, 0, .125);
+}
+
+table.object-list.inset>tbody>tr>td {
+  box-shadow: inset 0 0 1px 0 rgba(0,0,0,.4), inset 0px 3px 3px 0 rgba(0, 0, 0, .125);
+}
+
+table.object-list>tbody>tr>td:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+table.object-list>tbody>tr>td:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.inset {
+    box-shadow: inset 0px 3px 3px 0 rgba(0, 0, 0, .125);
+    -webkit-box-shadow: inset 0px 3px 3px 0 rgba(0, 0, 0, .125);
 }

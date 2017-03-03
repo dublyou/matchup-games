@@ -1,0 +1,212 @@
+<div class="container">
+    <div class="single-content">
+        <div id="" class="panel panel-primary suttle-shadow  ">
+
+    <div class="panel-heading low-padding">
+        <h2 class="panel-title no-padding no-margin text-center text-lg">New Competition</h2>
+    </div>
+
+    <form id="new_competition" action="None" class="form-horizontal" method="post"><input type="hidden" name="csrfmiddlewaretoken" value="TdgcQI7EOOAunk9K6RumxNbPQq4DjgP4CZjFVw2iqE59gj8K1Ut10TlFoSqW1Rvs">
+
+
+            <table class="table table-condensed">
+                <tbody><tr class="form-group "><th class="hidden-xs"><label for="id_competition_type">Competition Type:</label></th><td><select class="form-control" id="id_competition_type" name="competition_type" onchange="$(this).triggerAction()" placeholder="Competition Type" title="Competition Type" required="">
+<option value="" selected="selected">---------</option>
+<option value="1">matchup</option>
+<option value="2">series</option>
+<option value="3">tournament</option>
+<option value="4">season</option>
+<option value="5">olympics</option>
+</select></td></tr>
+<tr class="form-group "><th class="hidden-xs"><label for="id_name">Name:</label></th><td><input class="form-control" id="id_name" maxlength="50" name="name" placeholder="Name" title="Name" type="text" required=""></td></tr>
+<tr class="form-group "><th class="hidden-xs"><label for="id_game_type">Game Type:</label></th><td><input class="form-control  __action__competition_type__1--2--3--4" id="id_game_type" name="game_type" placeholder="Game Type" title="Game Type" type="text"></td></tr>
+<tr class="form-group "><th class="hidden-xs"><label for="id_signup_method">Signup Method:</label></th><td><select class="form-control" id="id_signup_method" name="signup_method" onchange="$(this).triggerAction()" placeholder="Signup Method" title="Signup Method" required="">
+<option value="" selected="selected">---------</option>
+<option value="1">invite</option>
+<option value="2">league</option>
+<option value="3">individual signup</option>
+<option value="4">team signup</option>
+</select></td></tr>
+<tr class="form-group "><th class="hidden-xs"><label for="id_matchup_type">Matchup Type:</label></th><td><select class="form-control  __action__signup_method__1" id="id_matchup_type" name="matchup_type" onchange="$(this).triggerAction()" placeholder="Matchup Type" title="Matchup Type" required="">
+<option value="" selected="selected">---------</option>
+<option value="1">individual</option>
+<option value="2">team</option>
+</select></td></tr>
+<tr class="form-group "><th class="hidden-xs"><label for="id_split_teams">Split Teams:</label></th><td><select class="form-control __action__signup_method__1 __action__matchup_type__2" id="id_split_teams" name="split_teams" placeholder="Split Teams" title="Split Teams" required="">
+<option value="" selected="selected">---------</option>
+<option value="1">random</option>
+<option value="2">manual</option>
+</select></td></tr>
+<tr class="form-group "><th class="hidden-xs"><label for="id_players_per_team">Players Per Team:</label></th><td><input class="form-control __action__signup_method__1 __action__matchup_type__2" id="id_players_per_team" name="players_per_team" placeholder="Players Per Team" title="Players Per Team" type="number" required=""></td></tr>
+<tr class="form-group "><th class="hidden-xs"><label for="id_league">League:</label></th><td><select class="form-control  __action__signup_method__2" id="id_league" name="league" placeholder="League" title="League" required="">
+<option value="" selected="selected">Select League</option>
+</select></td></tr>
+<tr class="form-group "><th class="hidden-xs"><label for="id_series_type">Series Type:</label></th><td><select class="form-control  __action__competition_type__2" id="id_series_type" name="series_type" placeholder="Series Type" title="Series Type">
+<option value="" selected="selected">---------</option>
+<option value="1">best of</option>
+<option value="2">first to</option>
+<option value="3">play all</option>
+</select></td></tr>
+<tr class="form-group "><th class="hidden-xs"><label for="id_series_games">Series Games:</label></th><td><select class="form-control  __action__competition_type__2" id="id_series_games" name="series_games" placeholder="Series Games" title="Series Games">
+<option value="3">3</option>
+<option value="5">5</option>
+<option value="7">7</option>
+<option value="9">9</option>
+<option value="11">11</option>
+<option value="13">13</option>
+<option value="15">15</option>
+</select></td></tr>
+<tr class="form-group "><th class="hidden-xs"><label for="id_tourney_type">Tourney Type:</label></th><td><select class="form-control  __action__competition_type__3" id="id_tourney_type" name="tourney_type" placeholder="Tourney Type" title="Tourney Type">
+<option value="" selected="selected">---------</option>
+<option value="1">single elimination</option>
+<option value="2">double elimination</option>
+<option value="3">series best of</option>
+</select></td></tr>
+<tr class="form-group "><th class="hidden-xs"><label for="id_tourney_seeds">Tourney Seeds:</label></th><td><select class="form-control  __action__competition_type__3" id="id_tourney_seeds" name="tourney_seeds" placeholder="Tourney Seeds" title="Tourney Seeds">
+<option value="" selected="selected">---------</option>
+<option value="1">random</option>
+<option value="2">assigned</option>
+</select></td></tr>
+<tr class="form-group "><th class="hidden-xs"><label for="id_season_type">Season Type:</label></th><td><select class="form-control  __action__competition_type__4" id="id_season_type" name="season_type" placeholder="Season Type" title="Season Type">
+<option value="" selected="selected">---------</option>
+<option value="1">round robin</option>
+<option value="2">input</option>
+</select></td></tr>
+<tr class="form-group "><th class="hidden-xs"><label for="id_season_games">Season Games:</label></th><td><select class="form-control  __action__competition_type__4" id="id_season_games" name="season_games" placeholder="Season Games" title="Season Games">
+<option value="2">2</option>
+<option value="4">4</option>
+<option value="6">6</option>
+<option value="8">8</option>
+<option value="10">10</option>
+<option value="12">12</option>
+<option value="14">14</option>
+<option value="16">16</option>
+<option value="18">18</option>
+<option value="20">20</option>
+<option value="22">22</option>
+<option value="24">24</option>
+<option value="26">26</option>
+<option value="28">28</option>
+<option value="30">30</option>
+<option value="32">32</option>
+<option value="34">34</option>
+<option value="36">36</option>
+<option value="38">38</option>
+<option value="40">40</option>
+<option value="42">42</option>
+<option value="44">44</option>
+<option value="46">46</option>
+<option value="48">48</option>
+<option value="50">50</option>
+<option value="52">52</option>
+<option value="54">54</option>
+<option value="56">56</option>
+<option value="58">58</option>
+<option value="60">60</option>
+<option value="62">62</option>
+<option value="64">64</option>
+<option value="66">66</option>
+<option value="68">68</option>
+<option value="70">70</option>
+<option value="72">72</option>
+<option value="74">74</option>
+<option value="76">76</option>
+<option value="78">78</option>
+<option value="80">80</option>
+<option value="82">82</option>
+<option value="84">84</option>
+<option value="86">86</option>
+<option value="88">88</option>
+<option value="90">90</option>
+<option value="92">92</option>
+<option value="94">94</option>
+<option value="96">96</option>
+<option value="98">98</option>
+<option value="100">100</option>
+<option value="102">102</option>
+<option value="104">104</option>
+<option value="106">106</option>
+<option value="108">108</option>
+<option value="110">110</option>
+<option value="112">112</option>
+<option value="114">114</option>
+<option value="116">116</option>
+<option value="118">118</option>
+<option value="120">120</option>
+<option value="122">122</option>
+<option value="124">124</option>
+<option value="126">126</option>
+<option value="128">128</option>
+<option value="130">130</option>
+<option value="132">132</option>
+<option value="134">134</option>
+<option value="136">136</option>
+<option value="138">138</option>
+<option value="140">140</option>
+<option value="142">142</option>
+<option value="144">144</option>
+<option value="146">146</option>
+<option value="148">148</option>
+<option value="150">150</option>
+<option value="152">152</option>
+<option value="154">154</option>
+<option value="156">156</option>
+<option value="158">158</option>
+<option value="160">160</option>
+<option value="162">162</option>
+</select></td></tr>
+<tr class="form-group "><th class="hidden-xs"><label for="id_playoff_format">Playoff Format:</label></th><td><select class="form-control  __action__competition_type__4" id="id_playoff_format" name="playoff_format" onchange="$(this).triggerAction()" placeholder="Playoff Format" title="Playoff Format">
+<option value="" selected="selected">---------</option>
+<option value="1">single elimination</option>
+<option value="2">double elimination</option>
+<option value="3">series best of</option>
+</select></td></tr>
+<tr class="form-group "><th class="hidden-xs"><label for="id_playoff_bids">Playoff Bids:</label></th><td><select class="form-control __action__competition_type__4 __action__playoff_format__1--2--3" id="id_playoff_bids" name="playoff_bids" placeholder="Playoff Bids" title="Playoff Bids">
+<option value="2">2</option>
+<option value="3">3</option>
+<option value="4">4</option>
+<option value="5">5</option>
+<option value="6">6</option>
+<option value="7">7</option>
+<option value="8">8</option>
+<option value="9">9</option>
+<option value="10">10</option>
+<option value="11">11</option>
+<option value="12">12</option>
+<option value="13">13</option>
+<option value="14">14</option>
+<option value="15">15</option>
+<option value="16">16</option>
+<option value="17">17</option>
+<option value="18">18</option>
+<option value="19">19</option>
+<option value="20">20</option>
+<option value="21">21</option>
+<option value="22">22</option>
+<option value="23">23</option>
+<option value="24">24</option>
+<option value="25">25</option>
+<option value="26">26</option>
+<option value="27">27</option>
+<option value="28">28</option>
+<option value="29">29</option>
+<option value="30">30</option>
+<option value="31">31</option>
+<option value="32">32</option>
+</select></td></tr>
+            </tbody></table>
+
+
+        <div id="controls">
+
+            <div class="flex low-margin-vert">
+                <button type="reset" id="new_competition_reset" class="btn btn-default margin-auto">Reset</button>
+                <button type="submit" id="new_competition_submit" class="btn btn-primary margin-auto input-validate ">Create</button>
+            </div>
+
+        </div>
+    </form>
+
+</div>
+    </div>
+</div>

@@ -1,2 +1,8 @@
 Django==1.10.3
 psycopg2==2.6.2
+geocoder
+django-allauth
+Pillow
+django-invitations
+django_smart_selects
+pg_trgm extension for postgresql

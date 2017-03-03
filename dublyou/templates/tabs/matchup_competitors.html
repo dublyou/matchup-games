@@ -1,0 +1,11 @@
+{% extends "generic/object_list.html" %}
+
+{% block tbody %}
+{% for member in object_list %}
+    <tr>
+        {% include "competitions/matchup.html" with matchup=member.matchup member=member %}
+    </tr>
+{% empty %}
+<tr><td>Sorry, no matchups yet.</td></tr>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="container">
+    <h2 class="title">{% trans "Invite Players" %}</h2>
+    <p>{% trans "Please add an email below. The user will receive an email with instructions." %}</p>
+
+    <form id="invite-form" method="POST" action="{% url 'send-invite' %}">
+    {% csrf_token %}
+        <div class="form-group">
+            <input type="text" name="email" id="id_email" class="form-control validate-email" placeholder="{% trans 'Email' %}">
+            {{ form.email.errors }}
+        </div>
+        <button type="submit" class="btn btn-primary">Send</button>
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            <span class="alert-message">{{ form.non_field_errors }}</span>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        {% endif %}
+        <p>{{ success_message }}</p>
+    </form>
+</div>
+{% endblock %}

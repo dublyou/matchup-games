@@ -1,0 +1,41 @@
+<div class="page-toolbar">
+    <div class="btn-toolbar" role="toolbar" aria-label="">
+        {% for btn_group in args %}
+        {% if btn_group.btns %}
+        <div class="btn-group" role="group">
+        {% if btn_group.type == "dropdown" %}
+            {% for btn in btn_group.btns %}
+            {% if forloop.first %}
+            <a role="button" title="{{ btn.label }}" class="btn btn-default btn-sm {{ btn_group.classes }}" href="{{ btn.link }}">
+                {% if btn.glyph %}
+                <span class="hidden-xs">{{ btn.label }}</span>{% include "generic/glyph.html" with glyph=btn.glyph %}
+                {% else %}
+                {{ btn.label }}
+                {% endif %}
+            </a>
+            <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <span class="caret"></span>
+                <span class="sr-only">Toggle Dropdown</span>
+            </button>
+            <ul class="dropdown-menu">
+            {% else %}
+                <li><a href="{{ btn.link }}" class="{{ btn_group.classes }}">{{ btn.label }}</a></li>
+            {% endif %}
+            {% endfor %}
+            </ul>
+        {% else %}
+            {% for btn in btn_group.btns %}
+            <a role="button" title="{{ btn.label }}" class="btn btn-default btn-sm {{ btn_group.classes }}" href="{{ btn.link }}">
+                {% if btn.glyph %}
+                <span class="hidden-xs">{{ btn.label }} </span>{% include "generic/glyph.html" with glyph=btn.glyph %}
+                {% else %}
+                {{ btn.label }}
+                {% endif %}
+            </a>
+            {% endfor %}
+        {% endif %}
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+</div>

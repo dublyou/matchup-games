@@ -15,5 +15,17 @@ DATABASES = {
     }
 }
 
-EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
-EMAIL_FILE_PATH = '/tmp/emails'
+# EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+# EMAIL_FILE_PATH = '/tmp/emails'
+
+ADMINS = [('Josh', 'jgriffin@matchup-games.com')]
+DEFAULT_FROM_EMAIL = 'jgriffin@matchup-games.com'
+SERVER_EMAIL = 'jgriffin@matchup-games.com'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.zoho.com'
+EMAIL_HOST_USER = 'jgriffin@matchup-games.com'
+EMAIL_HOST_PASSWORD = 'bkzevu0i0rwv'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+

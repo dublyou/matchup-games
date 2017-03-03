@@ -3,3 +3,7 @@ __pycache__
 .coverage
 htmlcov
 tmp
+etc
+dublyou/etc/secret_key.txt
+secret_key.txt
+etc/secret_key.txt

@@ -6,7 +6,7 @@
 
     ?>
     <body>
-    <?php echo file_get_contents("test.html"); ?>
+    <?php echo file_get_contents("new_competition.html"); ?>
     <?php echo html_scripts(["bracket.js"]); ?>
     </body>
 </html>

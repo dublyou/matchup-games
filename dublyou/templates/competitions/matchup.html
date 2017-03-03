@@ -1,0 +1,90 @@
+{% with status=matchup.status competition=matchup.competition %}
+<td>
+    {% if status != 4 and status != 3 %}
+    <div class="flex-wrap">
+        <div class="info-group">
+            <span class="info-label">Description:</span>
+            <span class="info">{{ matchup }}</span>
+        </div>
+        <div class="info-group">
+            <span class="info-label">Date:</span>
+            <span class="info">{{ matchup.date|date|default:"TBD" }}</span>
+        </div>
+        <div class="info-group">
+            <span class="info-label">Time:</span>
+            <span class="info">{{ matchup.time|default:"TBD" }}</span>
+        </div>
+        <div class="info-group">
+            <span class="info-label">Venue:</span>
+            <span class="info">{{ matchup.venue|default:"TBD" }}</span>
+        </div>
+        <div class="info-group">
+            {% if member %}
+            <span class="info-label">Opponent{{ member.opponents.count|pluralize }}:</span>
+            <span class="info">
+                {% include "profile/profile_dropdown.html" with args=member.opponents %}
+            </span>
+            {% else %}
+            <span class="info-label">Competitors:</span>
+            <span class="info">
+                {% include "competitions/profile_versus.html" with args=matchup.mc_set.all %}
+            </span>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <table class="matchup-group no-margin">
+        <tbody>
+        {% for competitor in matchup.mc_set.all %}
+        <tr class="matchup-member{% if competitor.place == 1 %} winner{% else %} loser{% endif %}">
+            {% if competition.competition_type == 3 %}
+            <td class="seed">{{ competitor.seed }}</td>
+            {% endif %}
+            <td class="name" style="width: 200px">
+                {% include "profile/profile_button.html" with args=competitor.competitor %}
+            </td>
+            <td class="score">
+                {% if competitor.score %}
+                {{ competitor.score }}
+                {% else %}
+                {{ competitor.place_string }}
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</td>
+<td class="hidden-xs">
+    <div class="flex-wrap">
+        <div class="info-group">
+            <span class="info-label">Competition:</span>
+            <span class="info">
+                {% include "profile/profile_button.html" with args=competition display='inline' %}
+            </span>
+        </div>
+        {% if competition.competition_type == 5 %}
+        <div class="info-group">
+            <span class="info-label">Events:</span>
+            <span class="info">
+                {% include "profile/profile_dropdown.html" with args=competition.children.all display='inline' %}
+            </span>
+        </div>
+        {% elif competition.game %}
+        <div class="info-group">
+            <span class="info-label">Game:</span>
+            <span class="info">
+                {% include "profile/profile_button.html" with args=competition.game display='inline' %}
+            </span>
+        </div>
+        {% endif %}
+    </div>
+</td>
+<td class="">
+    <a role="button" class="btn btn-default btn-sm width-100" href="{{ matchup.get_absolute_url }}">View</a>
+    {% if status != 4 and status != 3 %}
+    <a role="button" class="btn btn-default btn-sm width-100" href="{{ matchup.get_absolute_url }}edit/">Edit</a>
+    {% endif %}
+</td>
+{% endwith %}

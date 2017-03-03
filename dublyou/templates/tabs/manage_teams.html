@@ -1,0 +1,63 @@
+<form class="ajax" method="post" action="{{ object.get_absolute_url }}add_team/" autocomplete="off">
+    {% csrf_token %}
+    <div class="input-group margin-auto">
+        {{ args.add_form.name }}
+        <div class="input-group-addon hidden-xs">Division:</div>
+        <span id="division_combobox" class="flex width-100 combobox-container">
+            <input type="hidden" />
+            {{ args.add_form.division_name }}
+            <span class="input-group-btn dropdown-toggle" data-dropdown="dropdown">
+                <button type="button" class="btn btn-default">
+                    <span class="caret"></span>
+                    <span class="glyphicon glyphicon-remove"></span>
+                </button>
+            </span>
+        </span>
+        {{ args.add_form.division }}
+        <div class="input-group-btn">
+            <button type="submit" class="btn btn-default">Add</button>
+        </div>
+    </div>
+</form>
+<div class="container">
+    <form id="{{ args.id }}" method="post" action="{{ object.get_absolute_url }}manage_teams/">
+        {% csrf_token %}
+        {{ args.formset.management_form }}
+        <table class="table table-bordered table-striped table-condensed low-margin xs-text-sm">
+            <caption>Teams</caption>
+            {% if object.teams %}
+            {% for form in args.formset %}
+            {% if forloop.first %}
+            <thead><tr>
+                <th>Team</th>
+                <th>Players</th>
+                {% for field in form.visible_fields %}
+                {% if field.label != "Division" %}
+                <th>{{ field.label }}</th>
+                {% endif %}
+                {% endfor %}
+            </tr></thead>
+            <tbody>
+            {% endif %}
+                <tr>
+                    <td>{% include "profile/profile_button.html" with args=form.instance %}</td>
+                    <td>{% include "profile/profile_dropdown.html" with args=form.instance.players.all %}</td>
+                    {% for field in form.visible_fields %}
+                    {% if field.label != "Division" %}
+                    <td>{{ field }}{{ field.errors }}</td>
+                    {% endif %}
+                    {% endfor %}
+                    {{ form.division }}
+                    {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+            {% endif %}
+        </table>
+        {% if object.teams %}
+        <button type="submit" class="btn btn-default center-block">Update</button>
+        {% else %}
+        <p>No teams yet... Use the controls above to add a new team.</p>
+        {% endif %}
+    </form>
+</div>

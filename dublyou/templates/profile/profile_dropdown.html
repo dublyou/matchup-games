@@ -1,0 +1,24 @@
+{% if args|length > 0 %}
+<div class="btn-group{% if args|length > 1 %} dropdown{% endif %}" role="group">
+{% include "profile/profile_button.html" with args=args.0 %}
+{% if args|length > 1 %}
+{% for link in args %}
+{% if forloop.first %}
+    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        {{ args|length|add:"-1" }} more
+        <span class="caret"></span>
+        <span class="sr-only">Toggle Dropdown</span>
+    </button>
+    <ul class="dropdown-menu">
+{% else%}
+        <li role="presentation">
+            {% include "profile/profile_button.html" with args=link type="list" %}
+        </li>
+{% endif %}
+{% endfor %}
+    </ul>
+{% endif %}
+</div>
+{% else %}
+None
+{% endif %}

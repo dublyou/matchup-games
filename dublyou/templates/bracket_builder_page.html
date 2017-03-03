@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header med-margin-vert">
+        <h1>Bracket Builder</h1>
+    </div>
+    {% include "bracket_builder.html" %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{% static 'js/bracket.js' %}"></script>
+<script src="{% static 'js/build_bracket.js' %}"></script>
+{% endblock %}

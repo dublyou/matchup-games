@@ -1,419 +1,438 @@
-from django import forms
-from ...forms import MyBaseModelForm
-from . import models
-from . import fields
-import math
+import hashlib
 import random
 
-# from django.utils.translation import ugettext_lazy as _
+from django import forms
+from django.contrib.auth.models import User
+from django.core.validators import EmailValidator, RegexValidator
+
+from invitations.models import Invitation
+
+from ...forms import MyBaseModelForm, MyBaseForm
+from . import models
+from ..leagues.models import League
+from ...constants import (INPUT_CRITERIA, COMPETITION_DI,
+                          MATCHUP_TYPE_DI, NAME_REGEX)
+from ...fields import MultiTimeField
+from ...utils import send_notification
+
+
+class CompetitionSubForm(MyBaseModelForm):
+    def __init__(self, *args, **kwargs):
+        required = kwargs.pop("required", None)
+        self.request = kwargs.pop("request", None)
+        self.user = self.request.user if self.request else None
+        super(CompetitionSubForm, self).__init__(*args, **kwargs)
+        if required is not None:
+            for name, field in self.fields.items():
+                field.required = required
 
-INPUT_CRITERIA = {
-    "event_type": range(1, 5),
-    "name": r"^[-\s\.\w\d]{1,30}$",
-    "comp_type": range(1, 3),
-    "players_per_team": range(2, 33),
-    "split_teams": range(1, 3),
-    "league": r"^[-\s\.\w\d]{1,30}$",
-    "series_games": range(3, 16, 2),
-    "tourney_type": range(1, 3),
-    "tourney_seeds": range(1, 3),
-    "season_scheduling_type": range(1, 3),
-    "round_robin": range(1, 11),
-    "season_games": range(2, 163, 2),
-    "playoff_bids": range(2, 33),
-    "playoff_format": {1, 2, "series"},
-    "num_events": range(2, 17),
-    "game_rules": r"^[-\n\s\.\w\d]{1,300}$",
-    "game_location": "^[-\s\.\w\d]{1,30}$",
-}
-
-
-class CreateMatchups(object):
-
-    def __init__(self, competition, league):
-        event_type = competition.event_type
-        self.competition = competition
-        self.competitors = league.league_members.all() if league.matchup_type == 1 else league.team_set.all()
-
-        if event_type == 1:
-            self._create_matchup()
-        elif event_type == 2:
-            self._create_series()
-        elif event_type == 3:
-            self._create_tournament()
-        elif event_type == 4:
-            self._create_season()
-        elif event_type == 5:
-            for child in competition.competition_set.all():
-                event_type = child.event_type
-                self.competition = child
-                if event_type == 1:
-                    self._create_matchup()
-                elif event_type == 2:
-                    self._create_series()
-                elif event_type == 3:
-                    self._create_tournament()
-                elif event_type == 4:
-                    self._create_season()
-
-    def _create_matchup(self, parent_id=None, parent_type=None, child_num=1, matchups=None,
-                        tourney_round=None, status=1):
-
-        instance = models.Matchup(competition=self.competition,
-                                  status=status,
-                                  tourney_round=tourney_round,
-                                  child_num=child_num
-                                  )
-
-        if parent_id:
-            instance.parent_id = parent_id
-            instance.parent_type = parent_type
-
-        instance.save()
-
-        matchups = matchups or self.competitors
-
-        mc = models.MatchupCompetitor(matchup=instance)
-
-        for i, matchup in enumerate(matchups):
-            if "id" in matchup:
-                if "type" in matchup:
-                    if "outcome" in matchup:
-                        mc.dependent_outcome = matchup["outcome"]
-                    mc.dependent_type = matchup["type"]
-                    mc.dependent_id = matchup["id"]
-
-                else:
-                    if self.competition.matchup_type == 1:
-                        mc.player = matchup["id"]
-                    else:
-                        mc.team = matchup["id"]
-
-                if "seed" in matchup:
-                    mc.seed = matchup["seed"]
-
-            else:
-                mc.seed = i
-                if self.competition.matchup_type == 1:
-                    mc.player = matchup
-                else:
-                    mc.team = matchup
-
-            mc.save()
-
-        return instance
-
-    def _create_series(self, parent_event=None, series_type=None, series_games=None,
-                       competitors=None, child_num=1, tourney_round=None, status=1):
-        series_type = series_type or self.competition.series_type
-        series_games = series_games or self.competition.series_games
-
-        if parent_event:
-            instance = models.Series.create(series_type=series_type,
-                                            series_games=series_games,
-                                            competition=self.competition,
-                                            status=status,
-                                            tourney_round=tourney_round,
-                                            child_num=child_num
-                                            )
-        else:
-            instance = self.competition.series_set.all()[0]
-
-        competitors = competitors or self.competitors
-
-        for x in range(1, series_games + 1):
-            if series_type == 1 and x >= int(series_games/2) + 1:
-                status = 5
-            self._create_matchup(parent_id=instance.id, parent_type=2, child_num=x,
-                                 matchups=competitors, status=status)
-
-        return instance
-
-    def _create_round(self, tournament, current_ids, round_slots, round_num=1,
-                      round_type=None, series_games=None, status=1):
-
-        tourney_round = models.TourneyRound.create(tournament=tournament,
-                                                   round_type=round_type,
-                                                   round_num=round_num,
-                                                   )
-        ids = []
-        round_games = int(round_slots/2) - (round_slots - len(current_ids))
-
-        for y in range(0, round_games):
-            favorite_seed = int((round_slots / 2) - (round_games - y) + 1)
-            underdog_seed = (round_slots + 1) - favorite_seed
-            if "type" in current_ids[favorite_seed]:
-                current_ids[favorite_seed]["outcome"] = 1
-            if "type" in current_ids[underdog_seed]:
-                current_ids[underdog_seed]["outcome"] = 1
-            if round_type == 2:
-                if round_num % 2 == 0:
-                    current_ids[favorite_seed]["outcome"] = 2
-                if round_num == 1:
-                    current_ids[favorite_seed]["outcome"] = 2
-                    current_ids[underdog_seed]["outcome"] = 2
-            if status == 5 and round_type == 1:
-                current_ids[favorite_seed]["outcome"] = 2
-
-            matchups = [current_ids[favorite_seed], current_ids[underdog_seed]]
-            mc = {}
-
-            if series_games:
-                new_id = self._create_series(parent_event=tournament, child_num=y + 1, competitors=matchups,
-                                             series_games=series_games, series_type=1, tourney_round=tourney_round,
-                                             status=status)
-                mc["type"] = 2
-            else:
-                new_id = self._create_matchup(parent_type=3, parent_id=tournament.id, child_num=y + 1,
-                                              matchups=matchups, tourney_round=tourney_round, status=status)
-                mc["type"] = 1
-            mc["id"] = new_id.id
-            ids = [mc] + ids
-        return ids
-
-    def _create_tournament(self, parent_event=None, tourney_type=None,
-                           tourney_seeds=None, competitors=None, playoff=False):
-        if competitors:
-            num_competitors = len(competitors)
-        else:
-            num_competitors = len(self.competitors)
-            competitors = self.competitors
-
-        tourney_seeds = tourney_seeds or self.competition.tourney_seeds
-        tourney_type = tourney_type or self.competition.tourney_type
-
-        if parent_event:
-            instance = models.Tournament.create(tourney_type=tourney_type,
-                                                tourney_seeds=tourney_seeds,
-                                                competition=self.competition,
-                                                status=1
-                                                )
-        else:
-            instance = self.competition.tournament_set.all()[0]
-
-        if tourney_seeds == 1:
-            random.shuffle(competitors)
-
-        tourney_rounds = math.ceil(math.log(num_competitors, 2))
-        round1_byes = (2 ** tourney_rounds) - num_competitors
-
-        bye_ids = []
-        ids = []
-        l_ids = []
-        for i, competitor in enumerate(competitors):
-            mc = {"id": competitor, "seed": i}
-            if playoff:
-                mc["type"] = 4
-            ids.append(mc)
-            if i < round1_byes:
-                bye_ids.append(mc)
-
-        for x in range(0, tourney_rounds):
-
-            round_slots = 2 ** (tourney_rounds - x)
-
-            ids = self._create_round(tournament=instance, current_ids=ids, round_slots=round_slots,
-                                     round_num=x+1, round_type=1)
-            if tourney_type == 2:
-                if x == 0:
-
-                    round1_byes = int(round_slots/2) - len(ids)
-                    l_bye_ids = []
-                    for i, l_id in enumerate(ids):
-                        if i < round1_byes:
-                            l_bye_ids.append(l_id)
-                        else:
-                            l_ids.append(l_id)
-
-                    round_slots = int(round_slots/2)
-
-                    l_ids = self._create_round(tournament=instance, current_ids=l_ids,
-                                               round_slots=round_slots, round_num=1, round_type=2)
-
-                    l_ids = l_bye_ids + l_ids
-                else:
-                    round_num = x * 2
-                    l_ids = ids + l_ids
-                    l_ids = self._create_round(tournament=instance, current_ids=l_ids,
-                                               round_slots=round_slots, round_num=round_num, round_type=2)
-                    l_ids = self._create_round(tournament=instance, current_ids=l_ids,
-                                               round_slots=round_slots, round_num=round_num + 1, round_type=2)
-
-            if x == 0:
-                ids = bye_ids + ids
-
-        if tourney_type == 2:
-            ids = self._create_round(tournament=instance, current_ids=ids + l_ids, round_slots=2,
-                                     round_num=tourney_rounds + 1, round_type=1)
-            self._create_round(tournament=instance, current_ids=ids * 2, round_slots=2,
-                               round_num=tourney_rounds + 2, round_type=1, status=5)
-
-        return instance
-
-    def _create_season(self, parent_event=None, season_type=None, season_games=None, competitors=None,
-                       season_playoffs=None, playoff_bids=None, playoff_format=None):
-        season_type = season_type or self.competition.season_type
-        season_games = season_games or self.competition.season_games
-
-        if competitors:
-            num_competitors = len(competitors)
-        else:
-            num_competitors = len(self.competitors)
-            competitors = self.competitors
-
-        games = season_games * num_competitors if season_type == 1 else season_games
-
-        if parent_event:
-            instance = models.Season.create(season_type=season_type,
-                                            season_games=season_games,
-                                            season_playoffs=season_playoffs,
-                                            playoff_bids=playoff_bids,
-                                            playoff_format=playoff_format,
-                                            competition=self.competition,
-                                            status=1
-                                            )
-        else:
-            instance = self.competition.season_set.all()[0]
-
-        matchup_count = 1
-
-        if season_type == 1:
-            for r in range(0, games):
-                for i in range(0, num_competitors):
-                    for x in range(i + 1, num_competitors):
-                        game_competitors = [competitors[i], competitors[x]]
-                        child_num = (r * i) + (i * (x - i + 2)) + x - i + 2
-                        self._create_matchup(parent_type=4, parent_id=instance.id, matchups=game_competitors,
-                                             child_num=child_num)
-        else:
-            for x in range(1, int(games / 2) + 1):
-                matchup_count = 1 if matchup_count == num_competitors else matchup_count
-
-                for i in range(0, num_competitors):
-                    opp_i = (matchup_count + i) % num_competitors
-                    game_competitors = [competitors[i], competitors[opp_i]]
-                    child_num = ((x - 1) * num_competitors) + i + 1
-                    self._create_matchup(parent_type=4, parent_id=instance.id, matchups=game_competitors,
-                                         child_num=child_num)
-                matchup_count += 1
-
-        season_playoffs = season_playoffs or self.competition.season_playoffs
-
-        if season_playoffs:
-            playoff_bids = playoff_bids or self.competition.playoff_bids
-            playoff_format = playoff_format or self.competition.playoff_format
-
-            self._create_tournament(parent_event=instance, tourney_type=playoff_format, tourney_seeds=2,
-                                    competitors=[instance.id]*playoff_bids, playoff=True)
-
-        return instance
-
-
-class CompetitorInfoForm(MyBaseModelForm):
-    dependent_inputs = [{"name": "signup_method",
-                         "fields": {
-                             1: [{"name": "matchup_type",
-                                  "fields": {
-                                      1: [],
-                                      2: ["split_teams", "players_per_team"]
-                                  }}
-                                 ],
-                             2: ["league"]
-                         }}
-                        ]
-
-    class Meta:
-        model = models.CompetitorInfo
-        fields = '__all__'
-        exclude = ['competition']
-
-    def __init__(self, user, *args, **kwargs):
-        super(CompetitorInfoForm, self).__init__(*args, **kwargs)
-        self.fields['league'].queryset = \
-            user.comissioner_set.values_list("id", "league_name").order_by("league_name")
-
-
-class CompetitionForm(MyBaseModelForm):
-    game_type = fields.GameField(required=False)
-
-    dependent_inputs = [{"name": "event_type",
-                         "fields": {
-                             1: ["game_type"],
-                             2: ["game_type"],
-                             3: ["game_type"],
-                             4: ["game_type"],
-                             5: []
-                         }}
-                        ]
-
-    class Meta:
-        model = models.Competition
-        fields = '__all__'
-        exclude = ['parent', 'status', 'creation_datetime']
-
-    def __init__(self, parent=None, *args, **kwargs):
-        super(CompetitionForm, self).__init__(*args, **kwargs)
-        if parent:
-            self.fields['event_type'].choices = self.fields['event_type'].choices[0:4]
-
-    def clean(self):
-        super(CompetitionForm, self).clean()
-
-        # clean event_type dependent inputs
-        for input_tree in self.dependent_inputs:
-            self.clean_dependent_inputs(input_tree, INPUT_CRITERIA)
-
-    def save(self, commit=True, parent=None):
-        competition = super(CompetitionForm).save(commit=False)
-
-        if parent:
-            competition.parent = parent
-
-        if commit:
-            competition.save()
-        return competition
-
-
-class EventTypeForm(MyBaseModelForm):
     def save(self, commit=True, competition=None):
-        event = super(CompetitionForm).save(commit=False)
+        instance = super(CompetitionSubForm, self).save(commit=False)
 
-        if competition:
-            event.competition = competition
-        else:
-            commit = False
+        if not getattr(instance, "competition", False):
+            if competition:
+                instance.competition = competition
+            else:
+                commit = False
 
         if commit:
-            event.save()
-        return event
+            instance.save()
+        return instance
 
 
-class SeriesForm(EventTypeForm):
-    series_games = forms.ChoiceField(choices=[(x, x) for x in INPUT_CRITERIA["series_games"]])
-
+class SeriesForm(CompetitionSubForm):
     class Meta:
         model = models.Series
         fields = ['series_type', 'series_games']
 
 
-class TournamentForm(EventTypeForm):
+class TournamentForm(CompetitionSubForm):
     class Meta:
         model = models.Tournament
         fields = ['tourney_type', 'tourney_seeds']
 
 
-class SeasonForm(EventTypeForm):
-    season_games = forms.ChoiceField(choices=[(x, x) for x in INPUT_CRITERIA["season_games"]])
-    playoff_bids = forms.ChoiceField(choices=[(x, x) for x in INPUT_CRITERIA["playoff_bids"]], required=False)
-
-    dependent_inputs = [{"name": "season_playoffs",
-                         "fields": {
-                             True: ["playoff_bids", "playoff_format"],
-                             False: []
-                         }}
-                        ]
-
+class SeasonForm(CompetitionSubForm):
     class Meta:
         model = models.Season
         fields = '__all__'
         exclude = ['competition', 'status']
+
+
+class CompetitionForm(MyBaseModelForm):
+    dependent_inputs = None
+    form_classes = [SeriesForm, TournamentForm, SeasonForm]
+    parent = None
+    league = None
+
+    time = MultiTimeField()
+    competing = forms.BooleanField(label="Are you competing?", required=True, initial=True)
+
+    class Meta:
+        model = models.Competition
+        fields = ['name', 'competition_type', 'game', 'matchup_type', 'split_teams', 'players_per_team',
+                  'date', 'time', 'notes']
+        widgets = {"notes": forms.Textarea()}
+
+    def __init__(self, *args, **kwargs):
+        self.parent = kwargs.pop("parent", None)
+        initial = kwargs.get("initial")
+        if initial and "league" in initial:
+            league = League.object.filter(pk=initial["league"])
+            if league.exists():
+                self.league = league.get()
+            else:
+                initial.pop("league")
+        super(CompetitionForm, self).__init__(*args, **kwargs)
+
+        if self.parent:
+            self.fields['competition_type'].choices = self.fields['competition_type'].choices[0:5]
+            self.fields.pop("league", None)
+            self.fields.pop("competing", None)
+            self.fields.pop("matchup_type", None)
+        if self.league:
+            self.fields.pop("league", None)
+        elif not self.parent and "league" in self.fields:
+            self.fields['league'].queryset = \
+                self.user.profile.comm_leagues.order_by("league_name")
+        field_order = ['name', 'competition_type', 'game',]
+        for form_class in self.form_classes:
+            subform_fields = form_class(required=False, *args, **kwargs).fields
+            self.fields.update(subform_fields)
+            field_order += list(subform_fields.keys())
+        field_order.append('matchup_type')
+        self.dependent_inputs = [COMPETITION_DI, MATCHUP_TYPE_DI]
+        for input_tree in self.dependent_inputs:
+            self.add_actions(input_tree)
+        self.order_fields(field_order)
+
+    def clean(self):
+        super(CompetitionForm, self).clean()
+
+        for input_tree in self.dependent_inputs:
+            self.clean_dependent_inputs(input_tree, INPUT_CRITERIA)
+
+    def save(self, commit=True):
+        competition = super(CompetitionForm, self).save(commit=False)
+        profile = self.user.profile
+        competition.parent = self.parent
+        competition.creator = profile
+
+        if commit:
+            cleaned_data = self.cleaned_data
+            if not self.parent:
+                if self.league:
+                    competition.league = self.league
+                competition.save()
+                if competition.league:
+                    competition.invite_league()
+                if cleaned_data["competing"]:
+                    competition.add_competitor(player=profile)
+            else:
+                competition.matchup_type = self.parent.matchup_type
+                competition.save()
+            competition_type = cleaned_data["competition_type"]
+            if competition_type in range(2, 5):
+                self.form_classes[competition_type - 2](cleaned_data).save(competition=competition)
+        return competition
+
+
+class EditCompetitionForm(MyBaseModelForm):
+    sub_form_classes = [SeriesForm, TournamentForm, SeasonForm]
+    sub_instance = None
+    sub_form_class = None
+
+    time = MultiTimeField()
+
+    class Meta:
+        model = models.Competition
+        fields = ["name", "game",
+                  "date", "time",
+                  "venue", "notes"]
+        widgets = {"notes": forms.Textarea()}
+
+    def __init__(self, *args, **kwargs):
+        super(EditCompetitionForm, self).__init__(*args, **kwargs)
+        if self.instance:
+            comp_type = self.instance.competition_type
+            if comp_type in range(2, 5):
+                self.sub_instance = self.instance.competition_details
+                self.sub_form_class = self.sub_form_classes[comp_type - 2]
+                sub_form = self.sub_form_class(instance=self.sub_instance)
+                self.fields.update(sub_form.fields)
+                self.initial.update(sub_form.initial)
+        self.dependent_inputs = [COMPETITION_DI]
+        for input_tree in self.dependent_inputs:
+            self.add_actions(input_tree)
+
+    def save(self, commit=True):
+        competition = super(EditCompetitionForm, self).save()
+        if self.sub_form_class:
+            self.sub_form_class(self.cleaned_data, instance=self.sub_instance).save()
+        return competition
+
+
+class MatchupForm(MyBaseModelForm):
+    time = MultiTimeField()
+
+    class Meta:
+        model = models.Matchup
+        fields = ["date", "time", "notes"]
+        widgets = {"notes": forms.Textarea()}
+
+
+class MatchupResultFormset(forms.BaseInlineFormSet):
+    def clean(self):
+        if any(self.errors):
+            return
+        first_place_count = 0
+        form_count = self.total_form_count()
+        for form in self.forms:
+            place = form.cleaned_data['place']
+            if place > form_count:
+                form.add_error("place", "Invalid place.")
+            if place == 1:
+                first_place_count += 1
+                if first_place_count > 1:
+                    raise forms.ValidationError("Can not have multiple first places.")
+
+
+class MatchupResultForm(MyBaseModelForm):
+    place = forms.ChoiceField(choices=((1, 1), (2, 2)))
+
+    class Meta:
+        model = models.MatchupCompetitor
+        fields = ["place"]
+
+    def __init__(self, *args, **kwargs):
+        super(MatchupResultForm, self).__init__(*args, **kwargs)
+        if self.instance:
+            count = self.instance.opponents.count()
+            if count > 1:
+                self.fields["place"].choices = ((x, x) for x in range(1, count + 2))
+
+    def clean(self):
+        cleaned_data = super(MatchupResultForm, self).clean()
+        place = cleaned_data.get("place")
+        if place:
+            cleaned_data["place"] = int(place)
+        return cleaned_data
+
+    def save(self, commit=True):
+        instance = super(MatchupResultForm, self).save(commit=True)
+        print(instance.place)
+        instance.update_status()
+        return instance
+
+
+class CompetitionSignUpForm(MyBaseModelForm):
+    change_key = forms.BooleanField()
+
+    class Meta:
+        model = models.CompetitionSignUpPage
+        fields = ['expiration', 'msg_image']
+
+    def __init__(self, *args, **kwargs):
+        self.competition = kwargs.pop("instance", None)
+        if getattr(self.competition, "signup_page", None):
+            kwargs["instance"] = self.competition.signup_page
+        super(CompetitionSignUpForm, self).__init__(*args, **kwargs)
+        if not self.instance.pk:
+            self.fields.pop("change_key")
+
+    def save(self, commit=True):
+        instance = super(CompetitionSignUpForm, self).save(commit=False)
+        if not instance.pk:
+            instance.competition = self.competition
+        if not instance.pk or self.cleaned_data.get("change_key"):
+            salt = hashlib.sha1(str(random.random()).encode()).hexdigest()[:5]
+            instance.verification_key = hashlib.sha1((salt + self.competition.name).encode()).hexdigest()
+        if commit:
+            instance.save()
+        return instance.competition
+
+
+class AddCompetitorForm(MyBaseModelForm):
+    player_search = forms.CharField(validators=[EmailValidator(code="invalid")],
+                                    required=False, max_length=50)
+    team_name = forms.CharField(validators=[RegexValidator(NAME_REGEX)],
+                                max_length=30, required=False)
+    invite = None
+    approved = True
+
+    class Meta:
+        model = models.CompetitionInvite
+        fields = ['competitor', 'player']
+        widgets = {'player': forms.HiddenInput}
+
+    def __init__(self, *args, **kwargs):
+        self.parent = kwargs.pop("parent", None)
+        self.competition = self.parent if self.approved else self.parent.competition
+
+        super(AddCompetitorForm, self).__init__(*args, **kwargs)
+        self.fields["player"].required = False
+        player_search = self.fields["player_search"]
+        player_search.widget.attrs.update({
+            "data-content": "Search for an existing user or invite a new user by entering their email below.",
+            "data-placement": "top",
+            "data-container": "body",
+            "data-trigger": "focus"
+        })
+        if self.approved and self.competition.matchup_type == 2 \
+                and self.competition.split_teams == 1:
+            competitor_field = self.fields['competitor']
+            competitor_field.queryset = \
+                self.competition.competitor_set.filter(status=1).order_by("team_name")
+            competitor_field_classes = competitor_field.widget.attrs.get("class", "")
+            competitor_field.widget.attrs.update({
+                "class": competitor_field_classes + " hidden-select combobox",
+                "data-combobox-container": "#team_combobox"
+            })
+            self.fields['team_name'].widget.attrs.update({
+                "autocomplete": "off"
+            })
+        else:
+            self.fields.pop('competitor')
+            self.fields.pop('team_name')
+        self.added = False
+
+    def clean(self):
+        cleaned_data = super(AddCompetitorForm, self).clean()
+        if not cleaned_data["player"]:
+            player_email = cleaned_data.get("player_search", None)
+            if player_email:
+                user = User.objects.filter(email=player_email)
+
+                if user.exists():
+                    cleaned_data["player"] = user.get().profile
+                else:
+                    self.invite = Invitation.create(email=player_email, inviter=self.request.user)
+            else:
+                raise forms.ValidationError(
+                    'must enter a valid competitor'
+                )
+
+        if self.approved and not cleaned_data.get("competitor", False) and cleaned_data.get("team_name", None):
+            competitor, created = models.Competitor.objects.get_or_create(team_name=cleaned_data["team_name"],
+                                                                          competition=self.competition,
+                                                                          competitor_type=2)
+            if created:
+                competitor.status = 0
+                competitor.save()
+            cleaned_data["competitor"] = competitor
+        if not self.invite:
+            if cleaned_data["player"] in self.competition.players:
+                if self.competition.matchup_type == 2 and self.approved:
+                    if cleaned_data.get("competitor", False):
+                        competitor = cleaned_data['competitor']
+                        if not isinstance(competitor, models.Competitor):
+                            competitor = models.Competitor.objects.get(id=competitor)
+                        old_competitor = self.competition.get_competitor(cleaned_data["player"])
+                        if competitor.id != old_competitor.id:
+                            if old_competitor.status == 0:
+                                old_competitor.delete()
+                            else:
+                                old_competitor.players.remove(cleaned_data["player"])
+                            competitor.players.add(cleaned_data["player"])
+                            competitor.status = 1
+                            competitor.save()
+                        self.added = True
+                else:
+                    raise forms.ValidationError(
+                        'Player already exists.',
+                        code='duplicate'
+                    )
+        return cleaned_data
+
+    def save(self, commit=True):
+        if not self.added:
+            cleaned_data = self.cleaned_data
+            if cleaned_data['player']:
+                params = {"player": cleaned_data["player"],
+                          "competition": self.competition}
+                if not self.approved:
+                    params["invite_type"] = 2
+                    params["competitor"] = self.parent
+                else:
+                    params["invite_type__in"] = [1, 3]
+                existing_invites = models.CompetitionInvite.objects.filter(**params)
+                if existing_invites.exists():
+                    existing_invites.delete()
+                    if existing_invites.filter(accepted=True):
+                        competitor = self.competition.add_competitor(player=cleaned_data["player"])
+                        return competitor
+            pending_player = super(AddCompetitorForm, self).save(commit=False)
+            pending_player.competition = self.competition
+            if self.invite:
+                self.invite.send_invitation(self.request)
+                pending_player.invite = self.invite
+            if self.approved:
+                pending_player.invite_type = 1
+            else:
+                pending_player.invite_type = 2
+                pending_player.competitor = self.parent
+            pending_player.approved = self.approved
+
+            if commit:
+                pending_player.save()
+        return self.parent
+
+
+class CompetitorInviteForm(AddCompetitorForm):
+    approved = False
+
+
+class EditCompetitorForm(MyBaseModelForm):
+    seed = forms.ChoiceField(required=False)
+
+    class Meta:
+        model = models.Competitor
+        fields = ['team_name', 'captain']
+
+    def __init__(self, *args, **kwargs):
+        super(EditCompetitorForm, self).__init__(*args, **kwargs)
+        self.add_player = False
+        competition = self.instance.competition
+        if self.instance.competitor_type == 1:
+            self.fields.pop('team_name')
+            self.fields.pop('captain')
+        elif self.instance.status == 0:
+            teams = competition.competitors.filter(team_name__isnull=False).values_list("team_name")
+            self.fields["team_name"] = forms.ChoiceField(required=False,
+                                                         choices=[("", "--------")] + [(team, team) for team in teams])
+            self.fields["team_name"].widget.attrs.update({"class": "form-control"})
+            self.fields.pop('captain')
+        else:
+            self.fields["team_name"].required = True
+            self.fields['captain'].queryset = self.instance.players
+        if competition.competition_type != 3\
+                or competition.competition_details.tourney_seeds == 1:
+            self.fields.pop('seed')
+        else:
+            self.fields['seed'].choices = [(x, x) for x in range(1, competition.competitor_set.count() + 1)]
+            self.initial.update({"seed": self.instance.seed()})
+
+    def clean(self):
+        cleaned_data = super(EditCompetitorForm, self).clean()
+        if cleaned_data.get('team_name'):
+            teams = self.instance.competition.competitor_set.filter(team_name=cleaned_data['team_name'])
+            if self.instance.team_name != cleaned_data["team_name"] and teams.exists():
+                if self.instance.players.count() > 1:
+                    raise forms.ValidationError(
+                        'Team name already exists.',
+                        code='duplicate'
+                    )
+                else:
+                    self.add_player = True
+                    teams.first().players.add(self.instance.players.first())
+        return cleaned_data
+
+    def save(self, commit=True):
+        if self.add_player:
+            self.instance.delete()
+        else:
+            instance = super(EditCompetitorForm, self).save()
+            seed = self.cleaned_data.get("seed")
+            if seed and seed != self.initial.get("seed"):
+                instance.add_seed(seed)
+            return instance

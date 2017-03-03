@@ -1,0 +1,76 @@
+<div id="{{ args.popup_id }}" class="panel panel-primary suttle-shadow {{ args.classes }} {% if args.popup_id %}popup hidden b-action:popup-close:dismiss{% endif %}">
+    {% if args.title %}
+    <div class="panel-heading low-padding">
+        <h2 class="panel-title no-padding no-margin text-center text-lg">{{ args.title }}</h2>
+    </div>
+    {% endif %}
+    <form id="{{ args.id }}" action="{{ args.action|default:'' }}" class="form-horizontal" method="post" enctype='multipart/form-data'>
+        {% csrf_token %}
+        {% if args.windows %}
+        <div class="form-windows">
+        {% for window in args.windows %}
+            <div id="{{ window.id }}" class="{% if not forloop.first %}hidden{% endif %}">
+            {% if window.type == "form" %}
+                {{ window.content.as_input_group }}
+            {% elif window.type == "formset" %}
+            {% for form in window.content %}
+                {{ form.as_input_group }}
+            {% endfor %}
+            {% elif window.type == "form-table" %}
+                <table class="table table-condensed">
+                    {{ window.content.as_mytable }}
+                </table>
+            {% elif window.type == "panel-group" %}
+            {% for panel in window.panels %}
+                {% include "panel.html" with args=panel only %}
+            {% endfor %}
+            {% endif %}
+            </div>
+        {% endfor %}
+        </div>
+        {% else %}
+            {% if args.type == "form" %}
+                {{ args.form.as_input_group }}
+            {% elif args.type == "formset" %}
+            {% for form in args.form %}
+                {{ form.as_input_group }}
+            {% endfor %}
+            {% elif args.type == "form-table" %}
+            <table class="table table-condensed">
+                {{ args.form.as_mytable }}
+            </table>
+            {% elif args.type == "panel-group" %}
+            {% for panel in args.panels %}
+                {% include "panel.html" with args=panel only %}
+            {% endfor %}
+            {% endif %}
+        {% endif %}
+        <div id="controls">
+        {% if args.windows and args.windows|length > 1 %}
+            <input id="window_num" type="hidden" min="0" value="0" onchange="$(this).triggerAction()">
+            <div id="{{ window.id }}_controls" class="flex low-margin-vert {% if forloop.counter != args.windows|length %}b-action:{{ args.windows.id }}_back:display {% endif %} b-action:{{ windows.id }}_next:dismiss"
+      data-transition="slideLeft">
+                <button type="button" id="{{ args.id }}_back" class="btn btn-default margin-auto input-validate" data-action="toggle" onclick="$(this).triggerAction()">&laquo;&nbsp;Back</button>
+                <button type="button" id="{{ args.id }}_next" class="btn btn-default margin-auto input-validate" data-action="toggle" onclick="$(this).triggerAction()">Next&nbsp;&raquo;</button>
+            </div>
+        {% endif %}
+            <div class="flex low-margin-vert">
+                <button type="reset" id="{{ args.id }}_reset" class="btn btn-default margin-auto">Reset</button>
+                <button type="submit" id="{{ args.id }}_submit" class="btn btn-primary margin-auto input-validate {{ args.submit_classes }}">{{ args.submit_label }}</button>
+            </div>
+        {% if form.errors %}
+            <div class="alert alert-danger alert-dismissible" role="alert">
+                <span class="alert-message">{{ form.non_field_errors }}</span>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        {% endif %}
+        </div>
+    </form>
+    {% if args.popup_id %}
+    <a id="popup-close" role="button" class="close" onclick="$(this).triggerAction()" href="#" aria-label="Close">
+        <span class="glyphicon glyphicon-remove-sign" aria-hidden="true"></span>
+    </a>
+    {% endif %}
+</div>

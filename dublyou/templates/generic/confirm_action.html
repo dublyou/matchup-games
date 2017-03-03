@@ -1,0 +1,47 @@
+{% if errors %}
+<div class="modal-header">
+    {% if prev_url %}
+    <a role="button" href="{{ prev_url }}" class="close" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </a>
+    {% else %}
+    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </button>
+    {% endif %}
+    <h4 class="modal-title">Error</h4>
+</div>
+<div class="modal-body">
+    <div class="alert alert-danger" role="alert">
+        {% for error in errors %}
+        <p>{{ error }}</p>
+        {% endfor %}
+    </div>
+</div>
+{% if prev_url %}
+<div class="modal-footer">
+    <a role="button" href="{{ prev_url }}" class="btn btn-default">Go Back</a>
+</div>
+{% endif %}
+{% else %}
+<div class="modal-header">
+    <a role="button" href="{{ prev_url }}" class="close" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </a>
+    <h4 class="modal-title">Confirm</h4>
+</div>
+<div class="modal-body">
+    <div class="alert alert-warning" role="alert">
+        {{ warning }}
+    </div>
+</div>
+<div class="modal-footer">
+     <form action="{{ form_action }}" method="post" class="inline-block">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary">Yes</button>
+    </form>
+    {% if prev_url %}
+    <a role="button" href="{{ prev_url }}" class="btn btn-default">No</a>
+    {% endif %}
+</div>
+{% endif %}

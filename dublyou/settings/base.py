@@ -47,10 +47,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'dublyou.apps.player_profile',
+    'django.contrib.postgres.search',
+    'dublyou.apps.profile',
     'dublyou.apps.competitions',
     'dublyou.apps.leagues',
     'dublyou.apps.games',
+    'dublyou.apps.youtube',
 ]
 
 INSTALLED_APPS += (
@@ -59,19 +61,31 @@ INSTALLED_APPS += (
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    # Login via Google
     'allauth.socialaccount.providers.google',
-    # # Login via Twitter
     'allauth.socialaccount.providers.twitter',
+    'allauth.socialaccount.providers.facebook',
+    'invitations',
+    'smart_selects',
 )
 
 SITE_ID = 2
 
+# allauth settings
+ACCOUNT_AUTHENTICATION_METHOD = "email"
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
-ACCOUNT_FORMS = {}
+SOCIALACCOUNT_QUERY_EMAIL = True
+ACCOUNT_FORMS = {'signup': 'dublyou.forms.SignUpForm', 'login': 'dublyou.forms.SignInForm'}
 LOGIN_REDIRECT_URL = "/profile/"
+LOGOUT_REDIRECT_URL = "/"
+
+# invitation settings
+ACCOUNT_ADAPTER = 'invitations.models.InvitationsAdapter'
+INVITATIONS_ADAPTER = ACCOUNT_ADAPTER
+INVITATIONS_ACCEPT_INVITE_AFTER_SIGNUP = True
+INVITATIONS_INVITATION_EXPIRY = 14
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -132,7 +146,7 @@ AUTHENTICATION_BACKENDS = (
     # Default backend -- used to login by username in Django admin
     "django.contrib.auth.backends.ModelBackend",
     # `allauth` specific authentication methods, such as login by e-mail
-    "allauth.account.auth_backends.AuthenticationBackend",
+    "allauth.account.auth_backends.AuthenticationBackend"
 )
 
 # Internationalization
@@ -165,5 +179,5 @@ USE_TZ = True
 STATIC_ROOT = ''
 STATIC_URL = '/static/'
 
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_ROOT = os.path.dirname(BASE_DIR)
 MEDIA_URL = '/media/'

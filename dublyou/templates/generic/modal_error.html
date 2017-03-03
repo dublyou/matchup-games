@@ -1,0 +1,20 @@
+<div class="modal-header">
+    {% if prev_url %}
+    <a role="button" href="{{ prev_url }}" class="close" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </a>
+    {% else %}
+    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </button>
+    {% endif %}
+    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    <h4 class="modal-title">Error</h4>
+</div>
+<div class="modal-body">
+    <div class="alert alert-danger" role="alert">
+        {% for error in errors %}
+        <p>{{ error }}</p>
+        {% endfor %}
+    </div>
+</div>

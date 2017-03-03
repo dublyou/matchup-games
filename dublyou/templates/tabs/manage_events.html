@@ -1,0 +1,59 @@
+<div class="panel panel-primary suttle-shadow">
+    <div class="panel-heading no-padding">
+        <button class="btn btn-primary width-100" type="button" data-toggle="collapse" data-target="#new_event" aria-expanded="false" aria-controls="new_event">
+            New Event
+        </button>
+    </div>
+    <form id="new_event" class="collapse" method="post" action="{{ object.get_absolute_url }}add_event/">
+        {% csrf_token %}
+        <table class="table table-bordered table-condensed xs-text-sm">
+            {{ args.add_form.as_mytable }}
+        </table>
+        <div id="controls">
+            <button type="submit" class="btn btn-primary center-block low-margin-vert">Add Event</button>
+        {% if form.errors %}
+            <div class="alert alert-danger alert-dismissible" role="alert">
+                <span class="alert-message">{{ form.non_field_errors }}</span>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        {% endif %}
+        </div>
+    </form>
+</div>
+{% if args.formset %}
+<form id="{{ args.id }}" method="post" action="{{ object.get_absolute_url }}manage_events/">
+    {% csrf_token %}
+    {{ args.formset.management_form }}
+    <table class="table table-bordered table-striped table-condensed xs-text-sm">
+        <caption>Events</caption>
+    {% if object.children.all %}
+    {% for form in args.formset %}
+        {% if forloop.first %}
+        <thead><tr>
+            <th>Event</th>
+            <th>Game</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Venue</th>
+        </tr></thead>
+        <tbody>
+        {% endif %}
+            <tr>
+                <td>{% include "profile/profile_button.html" with args=form.instance %}</td>
+                <td>{% include "profile/profile_button.html" with args=form.instance.game %}</td>
+                <td>{{ form.date }}</td>
+                <td>{{ form.time }}</td>
+                <td>{{ form.venue }}</td>
+            </tr>
+    {% endfor %}
+        </tbody>
+    </table>
+    <button type="submit" class="btn btn-default center-block">Update</button>
+    {% else %}
+    </table>
+    <p>No events yet...</p>
+    {% endif %}
+</form>
+{% endif %}

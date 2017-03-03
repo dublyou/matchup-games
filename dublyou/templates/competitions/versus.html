@@ -1,0 +1,43 @@
+{% if args|length > 0 %}
+{% if args.first.competitor %}
+<a href="{{ args.first.competitor.get_absolute_url }}">
+  {{ args.first|stringformat:"s" }}
+</a>
+{% else %}
+{{ args.first|stringformat:"s" }}
+{% endif %}
+vs.
+{% if args|length > 2 %}
+{% for link in args %}
+{% if forloop.first %}
+<span role="presentation" class="dropdown">
+    <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+      {{ args|length|add:"-1" }} more<span class="caret"></span>
+    </a>
+    <ul class="dropdown-menu">
+{% else%}
+        <li role="presentation">
+            <a href="{{ link.get_absolute_url }}">
+              {{ link|stringformat:"s" }}
+            </a>
+        </li>
+{% endif %}
+{% endfor %}
+    </ul>
+</span>
+{% else %}
+    {% for mc in args %}
+        {% if not forloop.first %}
+            {% if mc.competitor %}
+            <a href="{{ mc.competitor.get_absolute_url }}">
+              {{ mc|stringformat:"s" }}
+            </a>
+            {% else %}
+            {{ mc|stringformat:"s" }}
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+{% endif %}
+{% else %}
+None
+{% endif %}

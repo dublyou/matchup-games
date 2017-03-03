@@ -1,0 +1,68 @@
+<style>
+    .btn-facebook {
+    color: #fff;
+    background-color: #3b5998;
+    border-color: rgba(0,0,0,0.2);
+}
+.btn-social {
+    position: relative;
+    padding-left: 44px;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+    .btn-fb:before {
+        content: "\f1a0"
+    }
+    .btn-social>:first-child {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 32px;
+    line-height: 34px;
+    font-size: 1.6em;
+    text-align: center;
+    border-right: 1px solid rgba(0,0,0,0.2);
+}
+.fa {
+    display: inline-block;
+    font: normal normal normal 14px/1 FontAwesome;
+    font-size: inherit;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.fa-facebook-f:before, .fa-facebook:before {
+    content: "\f09a";
+}
+</style>
+
+<a role="button" class="btn btn-fb btn-default" href="http://www.facebook.com/dialog/send?app_id=206066206525148&link=http://www.nytimes.com/interactive/2015/04/15/travel/europe-favorite-streets.html&redirect_uri=https://www.domain.com/">
+    Send Invite
+</a>
+<a role="button" class="btn btn-default" href="https://www.facebook.com/dialog/share?app_id=145634995501895&display=popup&href=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2F&redirect_uri=https%3A%2F%2Fdevelopers.facebook.com%2Ftools%2Fexplorer">
+    Share
+</a>
+<a class="btn btn-block btn-social btn-facebook" onclick="_gaq.push(['_trackEvent', 'btn-social', 'click', 'btn-facebook']);">
+            <span class="fa fa-facebook"></span> Sign in with Facebook
+          </a>
+<script>
+    function fb_send() {
+        FB.ui({
+          method: 'send',
+          app_id: 206066206525148,
+          link: 'http://www.nytimes.com/interactive/2015/04/15/travel/europe-favorite-streets.html',
+          redirect_uri: 'https://matchup-games.com',
+          message: 'Join my new competition',
+        });
+    }
+</script>
+
+<div class="fb-login-button" data-scope="email" onclick="fbStatus();">Connect</div>
+
+<script>
+    
+</script>

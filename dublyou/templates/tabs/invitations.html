@@ -1,0 +1,54 @@
+<div class="container">
+    <table class="table table-bordered table-condensed low-margin xs-text-sm">
+        <caption>Competition Invitations</caption>
+        {% if object.competition_invites.all|length > 0 %}
+        <thead><tr>
+            <th>Competition</th>
+            <th>Game</th>
+            <th>Action</th>
+        </tr></thead>
+        <tbody>
+        {% for invite in object.competition_invites.all %}
+        {% with competition=invite.competition %}
+        <tr>
+            <td>{% include "profile/profile_button.html" with args=competition %}</td>
+            <td>{% include "profile/profile_dropdown.html" with args=competition.game %}</td>
+            <td>
+                <a role="button" class="btn btn-default btn-sm width-100" href="{{ invite.get_absolute_url }}accept/">Accept</a>
+            </td>
+        </tr>
+        {% endwith %}
+        {% endfor %}
+        </tbody>
+    </table>
+        {% else %}
+    </table>
+        <p>No pending competition invitations.</p>
+        {% endif %}
+    <table class="table table-bordered table-condensed low-margin xs-text-sm">
+        <caption>League Invitations</caption>
+        {% if object.league_invites.all|length > 0 %}
+        <thead><tr>
+            <th>Competition</th>
+            <th>Game</th>
+            <th>Action</th>
+        </tr></thead>
+        <tbody>
+        {% for invite in object.league_invites.all %}
+        {% with league=invite.league %}
+        <tr>
+            <td>{% include "profile/profile_button.html" with args=league %}</td>
+            <td>{% include "profile/profile_dropdown.html" with args=league.games.all %}</td>
+            <td>
+                <a role="button" class="btn btn-default btn-sm width-100" href="{{ invite.get_absolute_url }}accept/">Accept</a>
+            </td>
+        </tr>
+        {% endwith %}
+        {% endfor %}
+        </tbody>
+    </table>
+        {% else %}
+    </table>
+        <p>No pending league invitations.</p>
+        {% endif %}
+</div>

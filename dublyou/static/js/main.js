@@ -53,6 +53,38 @@ $(function() {
 
 });
 
+function action_trigger(event_type, $this) {
+    'use strict';
+    
+    var data_action = $this.data("action-" + event_type)
+    var data_trigger = $this.prop("id")
+    data_trigger = (data_trigger.startsWith("id_")) ? data_trigger.slice(3) : data_trigger
+
+    $("[data-trigger*='" + data_trigger + "']").each(function() {
+      var action_criteria = $(this).data(data_action)
+      var criteria_match = true
+      var group = $(this).data("group")
+      var $target = (group) ? $(this).closest(group) : $(this)
+      for (var id in action_criteria) {
+        criteria_match = false
+        var criteria = action_criteria[id]
+        var id_value = $("[name='" + id + "']").val()
+        for (var i = 0; i < criteria.length; i++) {
+          if (criteria[i] == id_value) {
+            criteria_match = true;
+            break
+          }
+        }
+        if (!criteria_match) break
+      }
+      if (criteria_match) {
+        $target.show()
+      } else {
+        $target.hide()
+      }
+    })
+  }
+
 function sortable_initialize() {
     var fixHelper = function(e, tr) {
         var $originals = tr.children();
@@ -556,7 +588,6 @@ function action_sweep(target_classes,target_action_args) {
             var number_select_html = "<select class='timeSelect'></select>";
             $(this).after(number_select_html);
             $("select.timeSelect").copyAllAttributes($(this));
-            $("select.timeSelect").append("<option value=''>" + $(this).prop("title") + "</option>");
             var options = $(this).data("options");
             if (options != null && options != "") {
                 options = options.split(",");
@@ -564,47 +595,33 @@ function action_sweep(target_classes,target_action_args) {
                     $("select.timeSelect").append("<option value='" + options[i] + "'>" + options[i] + "</option>");
                 }
             } else {
-                var time_step_regex = /^(?:([1|2|3|4|6])h)?\s?(?:([1-5]?\d)m)?$/;
-                var time_step = $(this).prop("step");
-                time_step = (time_step != null && time_step != "" && time_step_regex.test(time_step)) ? time_step : "1h";
-                var time_regex = /^([1-9]|10|11|12):([0-5]?\d)\s(AM|PM)$/;
-                var start_time = $(this).data("start-time");
-                start_time = (start_time != null && start_time != "" && time_regex.test(start_time)) ? start_time : "12:00 AM";
+                var time_step_regex = /^(?:([1|2|3|4|6])h)?\s?(?:([1-5]?\d)m)?$/,
+                    time_step = $(this).data("time-step"),
+                    time_regex = /^([1-9]|10|11|12):([0-5]?\d)\s(AM|PM)$/,
+                    start_time = $(this).data("start-time");
+                time_step = (time_step !== undefined && time_step_regex.test(time_step)) ? time_step : "1h";
+                start_time = (start_time !== undefined && time_regex.test(start_time)) ? start_time : "12:00 AM";
+                var time_steps = time_step.match(time_step_regex),
+                    start_time_matches = start_time.match(time_regex),
+                    hour = parseInt(start_time_matches[1]),
+                    minutes = parseInt(start_time_matches[2]),
+                    am_pm = start_time_matches[3].toUpperCase(),
+                    time_value = (hour + ((am_pm == "AM") ? 0: 12)) + ":" + ((minutes < 10) ? "0" + minutes : minutes) + ":00";
+                
+                $("select.timeSelect").append("<option value=''>Select a time...</option><option value='" + time_value + "'>" + start_time + "</option>");
 
-                var time_steps = time_step.match(time_step_regex);
-                var start_time_matches = start_time.match(time_regex);
-
-                $("select.timeSelect").append("<option value='" + start_time + "'>" + start_time + "</option>");
-
-                var hour = parseInt(start_time_matches[1]);
-                var minutes = parseInt(start_time_matches[2]);
-                var am_pm = start_time_matches[3].toUpperCase();
-
-                if (time_steps[1] != null && time_steps[2] == null) {
-                    var hour_step = parseInt(time_steps[1]);
-                    hour = (hour + hour_step) % 12;
-                    if (am_pm == "AM") {
-                        while (hour < 12) {
-                            time_option = ((minutes % 60 < 10) ? ((hour == 0) ? 12 : hour) + ":0" + (minutes % 60) : ((hour == 0) ? 12 : hour) + ":" + (minutes % 60)) + " AM";
-                            $("select.timeSelect").append("<option value='" + time_option + "'>" + time_option + "</option>");
-                            hour += hour_step;
-                        }
-                    }
-                    hour = hour % 12;
-                    while (hour < 12) {
-                        time_option = ((minutes % 60 < 10) ? ((hour == 0) ? 12 : hour) + ":0" + (minutes % 60) : ((hour == 0) ? 12 : hour) + ":" + (minutes % 60)) + " PM";
-                        $("select.timeSelect").append("<option value='" + time_option + "'>" + time_option + "</option>");
-                        hour += hour_step;
-                    }
-                } else {
-                    var hour_step = (time_steps[1] == null) ? 0 : parseInt(time_steps[1]);
-                    var min_step = (60 * hour_step) + parseInt(time_steps[2]);
+                if (time_steps[1] != null || time_steps[2] != null) {
+                    var hour_step = (time_steps[1] == null) ? 0 : parseInt(time_steps[1]),
+                        min_step = (60 * hour_step) + ((time_steps[2] == null) ? 0 : parseInt(time_steps[2])),
+                        time_option;
+                    
                     hour = (hour + Math.floor((minutes + min_step)/60)) % 12;
                     minutes = (minutes + min_step) % 60;
                     if (am_pm == "AM") {
                         while (hour < 12) {
                             time_option = ((minutes < 10) ? ((hour == 0) ? 12 : hour) + ":0" + minutes : ((hour == 0) ? 12 : hour) + ":" + minutes) + " AM";
-                            $("select.timeSelect").append("<option value='" + time_option + "'>" + time_option + "</option>");
+                            time_value = hour + ":" + ((minutes < 10) ? "0" + minutes : minutes) + ":00";
+                            $("select.timeSelect").append("<option value='" + time_value + "'>" + time_option + "</option>");
                             hour += Math.floor((minutes + min_step)/60);
                             minutes = (minutes + min_step) % 60;
                         }
@@ -612,7 +629,8 @@ function action_sweep(target_classes,target_action_args) {
                     hour = hour % 12;
                     while (hour < 12) {
                         time_option = ((minutes < 10) ? ((hour == 0) ? 12 : hour) + ":0" + minutes : ((hour == 0) ? 12 : hour) + ":" + minutes) + " PM";
-                        $("select.timeSelect").append("<option value='" + time_option + "'>" + time_option + "</option>");
+                        time_value = (hour + 12) + ":" + ((minutes < 10) ? "0" + minutes : minutes) + ":00";
+                        $("select.timeSelect").append("<option value='" + time_value + "'>" + time_option + "</option>");
                         hour += Math.floor((minutes + min_step)/60);
                         minutes = (minutes + min_step) % 60;
                     }
@@ -796,26 +814,52 @@ month_names[9] = "October";
 month_names[10] = "November";
 month_names[11] = "December";
 
+function form_init($parent) {
+    'use strict';
+    $parent = $parent || $("body")
+    var selector = "[data-action-"
+    var events = ["change", "click", "mouseover"]
+    for (var i = 0; i < events.length; i++) {
+        $parent.find(selector + events[i] + "]").each(function () { 
+            action_trigger(events[i], $(this))
+        })
+    }
+    $parent.find("textarea").each(function () {
+        $(this).css("max-height", "35px")
+    })
+    $parent.find(".datepicker").each(function () {
+        var min_date = $(this).data("mindate") || 0
+        var max_date = $(this).data("maxdate") || "+1y"
+        $(this).datepicker(
+            {minDate: min_date, 
+             maxDate: max_date}
+        )
+    })
+    $parent.find('.combobox').combobox()
+} 
+
 
 $(document).ready(function () {
-    $("input[type='number']").numberSelect();
-    $("input[type='time']").timeSelect();
+    $(".numberpicker").numberSelect();
+    $(".timepicker").timeSelect();
+    $("#id_player_search").popover();
     build_calendar();
-    $("body").on("click", "#calendar_back", function() {
+    form_init();
+    $("body").on("focus", "textarea", function() {
+        $(this).css("max-height", "none");
+    }).on("click", "#calendar_back", function() {
         if ($("#calendar_month").val() == 1) {
             build_calendar(12,parseInt($("#calendar_year").val()) - 1);
         } else {
             build_calendar(parseInt($("#calendar_month").val()) - 1,parseInt($("#calendar_year").val()));
         }
-    });
-    $("body").on("click", "#calendar_next", function() {
+    }).on("click", "#calendar_next", function() {
         if ($("#calendar_month").val() == 12) {
             build_calendar(1,parseInt($("#calendar_year").val()) + 1);
         } else {
             build_calendar(parseInt($("#calendar_month").val()) + 1,parseInt($("#calendar_year").val()));
         }
-    });
-    $("body").on("show hide slideDown slideUp fadeIn fadeOut", "[data-toggle-opp]", function(event) {
+    }).on("show hide slideDown slideUp fadeIn fadeOut", "[data-toggle-opp]", function(event) {
         var selectors = $(this).data("toggle-opp").split(/\s+/);
         switch (event.type) {
             case "hide":
@@ -833,7 +877,7 @@ $(document).ready(function () {
                 }
                 break;
         }
-    }).on("keyup", "textarea, input[type='text']", function(e) {
+    }).on("keyup", "textarea.char-count, input[type='text'].char-count", function(e) {
         var max_chars = $(this).prop("maxlength");
         if (max_chars < 524288 && max_chars > 0) {
             var chars_left = max_chars - this.value.length;
@@ -873,30 +917,7 @@ $(document).ready(function () {
             $(this).prop("title",$(this).prop("title") + " (Optional)");
         }
     });
-    $(".datepicker").datepicker({ minDate: 0, maxDate: "+6M"});
-    $("body").on("submit", "form.ajax", function (e) {
-
-        var formData = {};
-        var file_name = $(this).prop("name");
-
-        $("#" + file_name + "_submit").triggerAction();
-
-        $(this).find("input,select,textarea").each(function() {
-            formData[$(this).prop("name")] = $(this).val();
-        });
-
-        $.ajax({
-            type        : 'POST',
-            url         : 'php/' + file_name + '.php',
-            data        : formData,
-            dataType    : 'json'
-        }).done(function(data) {
-
-        }).fail(function() {
-            // handle request failures
-        });
-        e.preventDefault();
-    });
+    
     $("table.column-sort").each(function() {
         var sort_column = parseInt($(this).data("sort-column"));
         $(this).find("tr>td:nth-child(" + sort_column + ")").each(function() {
@@ -955,5 +976,71 @@ $(document).ready(function () {
       }
     }).on("mousedown", ".sort-pop>*", function() {
       $(this).unwrap();
+    });
+});
+
+$(function () {
+    $('.button-checkbox').each(function () {
+
+        // Settings
+        var $widget = $(this),
+            $button = $widget.find('button'),
+            $checkbox = $widget.find('input:checkbox'),
+            color = $button.data('color'),
+            settings = {
+                on: {
+                    icon: 'glyphicon glyphicon-check'
+                },
+                off: {
+                    icon: 'glyphicon glyphicon-unchecked'
+                }
+            };
+
+        // Event Handlers
+        $button.on('click', function () {
+            $checkbox.prop('checked', !$checkbox.is(':checked'));
+            $checkbox.triggerHandler('change');
+            updateDisplay();
+        });
+        $checkbox.on('change', function () {
+            updateDisplay();
+        });
+
+        // Actions
+        function updateDisplay() {
+            var isChecked = $checkbox.is(':checked');
+
+            // Set the button's state
+            $button.data('state', (isChecked) ? "on" : "off");
+
+            // Set the button's icon
+            $button.find('.state-icon')
+                .removeClass()
+                .addClass('state-icon ' + settings[$button.data('state')].icon);
+
+            // Update the button's color
+            if (isChecked) {
+                $button
+                    .removeClass('btn-default')
+                    .addClass('btn-' + color + ' active');
+            }
+            else {
+                $button
+                    .removeClass('btn-' + color + ' active')
+                    .addClass('btn-default');
+            }
+        }
+
+        // Initialization
+        function init() {
+
+            updateDisplay();
+
+            // Inject the icon if applicable
+            if ($button.find('.state-icon').length == 0) {
+                $button.prepend('<i class="state-icon ' + settings[$button.data('state')].icon + '"></i> ');
+            }
+        }
+        init();
     });
 });

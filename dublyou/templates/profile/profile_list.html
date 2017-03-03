@@ -1,0 +1,5 @@
+{% for profile in profiles %}
+<li id="{{ profile.user.id }}" class="select-option" data-display="{{ profile.user.email }}">
+    {% include "profile/profile_button.html" with args=profile type="select_list" %}
+</li>
+{% endfor %}

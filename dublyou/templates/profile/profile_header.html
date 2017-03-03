@@ -1,0 +1,44 @@
+{% load static %}
+<div class="container-fluid">
+    <div class="wrap suttle-shadow">
+        <img class="background" width="100%" height="100%" src="{% static 'svg/bg_vert_grad_med.png' %}" alt="cover" />
+        <div class="wrap-content row xs-text-sm">
+            <div class="profile-name col-xs-12">{{ object.name }}</div>
+            <div class="profile-card col-xs-12 col-sm-8 col-md-6">
+                <div class="profile-details">
+                    {% if object.profile_image %}
+                    <div class="wrap width-30 low-margin-horz pull-left">
+                        <img class="" width="100%" height="100%" src="{{ object.profile_image }}" alt="user" style="border-radius:10px"/>
+                    </div>
+                    {% endif %}
+                    {% for key, value in args.details %}
+                    {% if value %}
+                    <div class="info-group">
+                        <span class="info-label">{{ key|title }}:</span>
+                        <span class="info">{{ value|safe }}</span>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-xs-12 col-sm-4 col-md-offset-2">
+                {% if args.stats %}
+                <div class="panel panel-default">
+                    <table class="table table-bordered table-striped table-condensed suttle-shadow">
+                    {% for label, stat in args.stats %}
+                        <tr>
+                            <th>{{ label|title }}:</th>
+                            <td>{{ stat }}</td>
+                        </tr>
+                    {% endfor %}
+                    </table>
+                    {% if args.stats|length > 5 %}
+                    <div class="panel-footer text-center low-padding-vert"><a href="/profile/stats/">More Stats</a></div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
